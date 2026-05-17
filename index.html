@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gacha</title>
+  <link rel="stylesheet" href="css.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <h1>Gacha</h1>
+          <p>Gacha, oro pasivo y encantamientos</p>
+        </div>
+      </div>
+
+      <div class="stats-bar" aria-label="Resumen del juego">
+        <div class="stat">
+          <span>Oro</span>
+          <strong id="goldValue">0</strong>
+        </div>
+        <div class="stat">
+          <span>Por segundo</span>
+          <strong id="incomeValue">0/s</strong>
+        </div>
+        <div class="stat">
+          <span>Niveles</span>
+          <strong id="cardsValue">0</strong>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-button" id="soundButton" type="button" title="Activar sonido" aria-label="Activar sonido">
+          <span aria-hidden="true">S</span>
+        </button>
+        <button class="icon-button" id="musicButton" type="button" title="Activar musica" aria-label="Activar musica">
+          <span aria-hidden="true">B</span>
+        </button>
+        <button class="icon-button" id="resetButton" type="button" title="Reiniciar partida" aria-label="Reiniciar partida">
+          <span aria-hidden="true">R</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <section class="panel shop-panel" aria-labelledby="gachaTitle">
+        <div class="panel-heading">
+          <div>
+            <h2 id="gachaTitle">Gacha</h2>
+            <p>Sobres mas caros tienen mejores probabilidades.</p>
+          </div>
+        </div>
+        <div class="gacha-list" id="gachaList"></div>
+      </section>
+
+      <section class="play-area">
+        <section class="showcase" aria-labelledby="lastCardTitle">
+          <div class="showcase-copy">
+            <span class="eyebrow">Ultima carta</span>
+            <h2 id="lastCardTitle">Abre un sobre</h2>
+            <p id="lastCardText">Empiezas con oro suficiente para tu primer gacha.</p>
+          </div>
+          <div class="showcase-card" id="lastCardSlot"></div>
+        </section>
+
+        <section class="panel collection-panel" aria-labelledby="collectionTitle">
+          <div class="panel-heading collection-heading">
+            <div>
+              <h2 id="collectionTitle">Coleccion</h2>
+              <p id="collectionSummary">Cartas descubiertas, niveles y XP.</p>
+            </div>
+            <div class="tabs" id="rarityFilters" role="tablist" aria-label="Filtrar rareza"></div>
+          </div>
+          <div class="collection-grid" id="collectionGrid"></div>
+        </section>
+      </section>
+
+      <aside class="side-column">
+        <section class="panel enchant-panel" aria-labelledby="enchantTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="enchantTitle">Encantar</h2>
+              <p>Mejora una carta para subir su produccion.</p>
+            </div>
+          </div>
+
+          <div class="selected-card" id="selectedCardSlot"></div>
+          <div class="detail-list" id="selectedDetails"></div>
+          <button class="primary-action" id="enchantButton" type="button">Encantar</button>
+        </section>
+
+        <section class="panel log-panel" aria-labelledby="logTitle">
+          <div class="panel-heading compact-heading">
+            <h2 id="logTitle">Tiradas</h2>
+          </div>
+          <div class="pull-log" id="pullLog"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="Js.js"></script>
+</body>
+</html>
