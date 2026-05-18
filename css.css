@@ -779,6 +779,9 @@ h3 {
   display: flex;
   align-items: end;
   overflow-wrap: anywhere;
+  /* Softer outline for readability */
+  -webkit-text-stroke: 0.45px rgba(255,255,255,0.95);
+  text-shadow: 0 0 1px rgba(255,255,255,0.85), 0 1px 1px rgba(0,0,0,0.35);
 }
 
 .card-rarity {
