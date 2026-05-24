@@ -2,6 +2,10 @@ const SAVE_KEY = "forja-cartas-v1";
 const SOUND_KEY = "forja-cartas-sound-v1";
 const MUSIC_KEY = "forja-cartas-music-v1";
 const MUSIC_LOOP_SECONDS = 12.8;
+const DEFAULT_MUSIC_FILES = [
+  "music/track1.mp3",
+  "music/toucanmusic-las-vegas-407027.mp3"
+];
 const MAX_CARD_LEVEL = 20;
 const XP_PER_CARD_PULL = 5;
 const BASE_CARD_XP_REQUIRED = 50;
@@ -14,7 +18,8 @@ const rarities = [
   { id: "veryRare", name: "Muy raro", short: "MR", color: "var(--very-rare)", baseEnchant: 3200 },
   { id: "legendary", name: "Legendario", short: "L", color: "var(--legendary)", baseEnchant: 14000 },
   { id: "artifact", name: "Artefacto", short: "A", color: "var(--artifact)", baseEnchant: 62000 },
-  { id: "mythic", name: "Mitico", short: "M", color: "var(--mythic)", baseEnchant: 270000 }
+  { id: "mythic", name: "Mitico", short: "M", color: "var(--mythic)", baseEnchant: 270000 },
+  { id: "special", name: "Especial", short: "S", color: "var(--special)", baseEnchant: 500000 },
 ];
 
 
@@ -73,10 +78,6 @@ const cards = [
   { id: "deep-observer", name: "Espectador Arcano", rarity: "rare", income: 8.2, sigil: "EO" },
   { id: "thorn-whisper", name: "Asesino Drow", rarity: "rare", income: 9.1, sigil: "DW" },
   { id: "burning-chain", name: "Diablo de Brasas", rarity: "rare", income: 10.5, sigil: "DB" },
-
-
-
-  // MAS RARE
   { id: "owlbear-rage", name: "Oso Buho Furioso", rarity: "rare", income: 11.2, sigil: "OB" },
   { id: "minotaur-maze", name: "Minotauro del Laberinto", rarity: "rare", income: 12.4, sigil: "MN" },
   { id: "harpy-singer", name: "Arpia Cantora", rarity: "rare", income: 13.1, sigil: "AR" },
@@ -95,8 +96,6 @@ const cards = [
   { id: "ashen-eye", name: "Beholder Dormido", rarity: "veryRare", income: 31, sigil: "BE" },
   { id: "blood-harvest", name: "Segador Carmesí", rarity: "veryRare", income: 36, sigil: "SC" },
   { id: "night-requiem", name: "Jinete Sin Rostro", rarity: "veryRare", income: 42, sigil: "JR" },
-
-  // MAS VERY RARE
   { id: "medusa-stone", name: "Medusa Maldita", rarity: "veryRare", income: 48, sigil: "MD" },
   { id: "aboleth-mind", name: "Aboleth Antiguo", rarity: "veryRare", income: 56, sigil: "AB" },
   { id: "yuan-ti", name: "Yuan-ti Supremo", rarity: "veryRare", income: 64, sigil: "YT" },
@@ -107,13 +106,11 @@ const cards = [
   { id: "sun-queen", name: "Quimera Alada", rarity: "legendary", income: 54, sigil: "QI" },
   { id: "golden-pact", name: "Esfinge Antigua", rarity: "legendary", income: 66, sigil: "ES" },
   { id: "ember-saint", name: "Vampiro Noble", rarity: "legendary", income: 78, sigil: "VA" },
-  { id: "last-banner", name: "Hidra de Nueve", rarity: "legendary", income: 94, sigil: "HI" },
+  { id: "last-banner", name: "Hidra de Nueve Cabezas", rarity: "legendary", income: 94, sigil: "HI" },
   { id: "sunken-throne", name: "Kraken Abisal", rarity: "legendary", income: 110, sigil: "KR" },
   { id: "celestial-hammer", name: "Ángel Exiliado", rarity: "legendary", income: 128, sigil: "AN" },
   { id: "void-cathedral", name: "Dragón Espectral", rarity: "legendary", income: 146, sigil: "DE" },
   { id: "infernal-gate", name: "Archidemonio Balor", rarity: "legendary", income: 172, sigil: "BL" },
-
-  // MAS LEGENDARY
   { id: "pit-fiend", name: "Diablo de Foso", rarity: "legendary", income: 190, sigil: "PF" },
   { id: "ancient-beholder", name: "Beholder Tirano", rarity: "legendary", income: 215, sigil: "BT" },
   { id: "storm-giant", name: "Gigante de Tormenta", rarity: "legendary", income: 240, sigil: "GT" },
@@ -131,9 +128,7 @@ const cards = [
   { id: "eternal-flesh", name: "Devorador Mental Ancestral", rarity: "artifact", income: 460, sigil: "DM" },
   { id: "world-root", name: "Treant Milenario", rarity: "artifact", income: 540, sigil: "TR" },
   { id: "storm-maw", name: "Leviatán Celeste", rarity: "artifact", income: 640, sigil: "LV" },
-  { id: "obsidian-reign", name: "Rey Liche", rarity: "artifact", income: 760, sigil: "RL" },
-
-  // MAS ARTIFACT
+  { id: "obsidian-reign", name: "Dios Liche", rarity: "artifact", income: 760, sigil: "RL" },
   { id: "death-knight", name: "Caballero de la Muerte", rarity: "artifact", income: 900, sigil: "CD" },
   { id: "astral-dragon", name: "Dragon Astral", rarity: "artifact", income: 1100, sigil: "AS" },
   { id: "demon-prince", name: "Príncipe Demonio", rarity: "artifact", income: 1300, sigil: "PD" },
@@ -152,6 +147,9 @@ const cards = [
   { id: "eternal-king", name: "Rey Eterno", rarity: "mythic", income: 3500, sigil: "RE" },
   { id: "abyssal-lord", name: "Señor del Abismo", rarity: "mythic", income: 4300, sigil: "SA" },
   { id: "celestial-empress", name: "Emperatriz Celestial", rarity: "mythic", income: 5200, sigil: "EC" },
+
+  // Specials
+{ id: "tests-card", name: "Aguila Sensual", rarity: "special", income: 0, sigil: "EC" },
 
 
   // DOC 🧠
@@ -228,7 +226,7 @@ const gachas = [
     color: "#138a91",
     baseCost: 165000,
     growth: 1.12,
-    weights: { common: 15, uncommon: 80, rare: 230, veryRare: 330, legendary: 250, artifact: 85, mythic: 10 }
+    weights: { common: 15, uncommon: 80, rare: 230, veryRare: 330, legendary: 250, artifact: 85, mythic: 10, special: 0.1 }
   },
   {
     id: "cosmic",
@@ -237,7 +235,7 @@ const gachas = [
     color: "#ce3e72",
     baseCost: 900000,
     growth: 1.125,
-    weights: { common: 0, uncommon: 25, rare: 105, veryRare: 260, legendary: 340, artifact: 220, mythic: 50 }
+    weights: { common: 0, uncommon: 25, rare: 105, veryRare: 260, legendary: 340, artifact: 220, mythic: 50, special: 5 }
   }
 ];
 
@@ -259,13 +257,181 @@ const baseEnchantMaterial = {
   color: "#8b9290"
 };
 
+const roleDefinitions = [
+  {
+    id: "attack",
+    name: "Ataque",
+    short: "AT",
+    color: "#d7472f",
+    passive: "Aumenta recompensas de expediciones."
+  },
+  {
+    id: "defense",
+    name: "Defensa",
+    short: "DF",
+    color: "#2c6fd1",
+    passive: "Reduce la duracion de expediciones."
+  },
+  {
+    id: "magic",
+    name: "Magia",
+    short: "MG",
+    color: "#7b4fca",
+    passive: "Reduce el costo de encantamientos."
+  },
+  {
+    id: "support",
+    name: "Soporte",
+    short: "SP",
+    color: "#159b61",
+    passive: "Aumenta la XP ganada por tirada."
+  },
+  {
+    id: "economy",
+    name: "Economia",
+    short: "EC",
+    color: "#ce942f",
+    passive: "Aumenta el oro pasivo total."
+  }
+];
+
+const uniqueAbilitiesByRole = {
+  attack: {
+    name: "Marca de Cazador",
+    description: "+8% recompensa de expediciones."
+  },
+  defense: {
+    name: "Campamento Seguro",
+    description: "-4% duracion de expediciones."
+  },
+  magic: {
+    name: "Sello Astral",
+    description: "-2% costo de encantamientos."
+  },
+  support: {
+    name: "Mentor Oculto",
+    description: "+1 XP por tirada."
+  },
+  economy: {
+    name: "Tesoro Vivo",
+    description: "+8% produccion de esta carta."
+  }
+};
+
+const BASE_UNIQUE_CHANCE = 0.008;
+
+const roleMoves = {
+  attack: [
+    { id: "heavy_strike", name: "Golpe feroz", description: "Mucho dano directo.", damage: 1.25 },
+    { id: "execute", name: "Remate", description: "Mas fuerte contra enemigos heridos.", damage: 0.9, execute: true }
+  ],
+  defense: [
+    { id: "harden", name: "Endurecer", description: "Gana escudo y recibe menos dano.", damage: 0.25, shield: 1.15 },
+    { id: "body_blow", name: "Golpe cuerpo", description: "Dano medio y algo de escudo.", damage: 0.82, shield: 0.35 }
+  ],
+  magic: [
+    { id: "arcane_bolt", name: "Rayo arcano", description: "Dano estable y preciso.", damage: 1.05 },
+    { id: "mystic_barrier", name: "Barrera mistica", description: "Escudo magico con contraataque.", damage: 0.62, shield: 0.7 }
+  ],
+  support: [
+    { id: "inspire", name: "Inspirar", description: "Cura y prepara el siguiente golpe.", damage: 0.52, heal: 0.65 },
+    { id: "quick_hit", name: "Golpe rapido", description: "Dano agil y recompensa de XP.", damage: 0.86, xpBonus: 2 }
+  ],
+  economy: [
+    { id: "coin_toss", name: "Monedazo", description: "Dano y oro extra si ganas.", damage: 0.78, goldBonus: 0.16 },
+    { id: "good_deal", name: "Trato astuto", description: "Escudo y oro extra si ganas.", damage: 0.48, shield: 0.55, goldBonus: 0.28 }
+  ]
+};
+
+const battleEnemies = [
+  "Bandido de cobre",
+  "Sombra errante",
+  "Mercenario roto",
+  "Centinela del polvo",
+  "Duelista hueco",
+  "Guarda de ruinas",
+  "Eco del abismo"
+];
+
+const expeditions = [
+  {
+    id: "border_patrol",
+    name: "Patrulla de la Frontera",
+    role: "attack",
+    unlockLevel: 5,
+    recommendedPower: 5,
+    duration: 300,
+    gold: 180,
+    xp: 3,
+    description: "Una salida corta para que cualquier carta gane oro y practica."
+  },
+  {
+    id: "old_ruins",
+    name: "Ruinas Antiguas",
+    role: "magic",
+    unlockLevel: 15,
+    recommendedPower: 12,
+    duration: 600,
+    gold: 520,
+    xp: 4,
+    description: "Explora restos arcanos con la carta que elijas."
+  },
+  {
+    id: "trade_route",
+    name: "Ruta Mercante",
+    role: "economy",
+    unlockLevel: 30,
+    recommendedPower: 22,
+    duration: 900,
+    gold: 1450,
+    xp: 5,
+    description: "Protege un envio largo y vuelve con oro estable."
+  },
+  {
+    id: "silent_fort",
+    name: "Fuerte Silencioso",
+    role: "defense",
+    unlockLevel: 55,
+    recommendedPower: 38,
+    duration: 1500,
+    gold: 3900,
+    xp: 6,
+    description: "Una guardia prolongada para cartas de cualquier rol."
+  },
+  {
+    id: "healing_grove",
+    name: "Arboleda del Juramento",
+    role: "support",
+    unlockLevel: 85,
+    recommendedPower: 55,
+    duration: 2400,
+    gold: 9400,
+    xp: 8,
+    description: "Un encargo largo que premia constancia con XP extra."
+  },
+  {
+    id: "cosmic_gate",
+    name: "Puerta Cosmica",
+    role: "magic",
+    unlockLevel: 130,
+    recommendedPower: 85,
+    duration: 3600,
+    gold: 26000,
+    xp: 10,
+    description: "Una expedicion mayor para cartas bien entrenadas."
+  }
+];
+
 const initialState = {
   gold: 80,
   owned: {},
   pulls: {},
   selectedCardId: null,
   lastCardId: null,
+  lastReveal: null,
   log: [],
+  expeditions: {},
+  battle: null,
   filter: "all",
   lastSavedAt: Date.now()
 };
@@ -277,7 +443,10 @@ function createInitialState() {
     pulls: {},
     selectedCardId: null,
     lastCardId: null,
+    lastReveal: null,
     log: [],
+    expeditions: {},
+    battle: null,
     filter: "all",
     lastSavedAt: Date.now()
   };
@@ -300,6 +469,15 @@ let localImageMap = null;
 const IMAGE_FIT_KEY = 'forja-image-fit';
 // 'cover' fills the card (may crop). 'contain' shows whole image (may leave empty space).
 let imageFitMode = localStorage.getItem(IMAGE_FIT_KEY) || 'cover';
+const MUSIC_VOL_KEY = 'forja-music-volume';
+let musicVolume = Number(localStorage.getItem(MUSIC_VOL_KEY));
+if (!Number.isFinite(musicVolume)) musicVolume = 0.42;
+
+function setMusicVolume(v) {
+  musicVolume = Number(v);
+  try { localStorage.setItem(MUSIC_VOL_KEY, String(musicVolume)); } catch (e) {}
+  if (musicAudioElement) musicAudioElement.volume = musicVolume;
+}
 
 function setImageFitMode(mode) {
   imageFitMode = mode === 'contain' ? 'contain' : 'cover';
@@ -359,9 +537,13 @@ const elements = {
   selectedCardSlot: document.querySelector("#selectedCardSlot"),
   selectedDetails: document.querySelector("#selectedDetails"),
   enchantButton: document.querySelector("#enchantButton"),
+  battleArena: document.querySelector("#battleArena"),
   pullLog: document.querySelector("#pullLog"),
+  expeditionList: document.querySelector("#expeditionList"),
   soundButton: document.querySelector("#soundButton"),
   musicButton: document.querySelector("#musicButton"),
+  musicVolume: document.querySelector("#musicVolume"),
+  playMusicButton: document.querySelector("#playMusicButton"),
   resetButton: document.querySelector("#resetButton")
   
 };
@@ -399,7 +581,7 @@ function cardById(id) {
 
 function ownedEntry(cardId) {
   if (!state.owned[cardId]) {
-    state.owned[cardId] = { copies: 0, xp: 0, enchant: 0 };
+    state.owned[cardId] = { copies: 0, xp: 0, enchant: 0, uniqueUnlocked: false };
   }
   normalizeCardEntry(state.owned[cardId]);
   return state.owned[cardId];
@@ -417,6 +599,9 @@ function loadState() {
       ...saved,
       owned: saved.owned || {},
       pulls: saved.pulls || {},
+      lastReveal: saved.lastReveal || null,
+      expeditions: saved.expeditions && typeof saved.expeditions === "object" ? saved.expeditions : {},
+      battle: saved.battle && typeof saved.battle === "object" ? saved.battle : null,
       log: Array.isArray(saved.log) ? saved.log.slice(0, 8) : []
     };
     normalizeOwnedCards(next.owned);
@@ -634,8 +819,9 @@ function playMusicTone(frequency, delay = 0, duration = 0.5, type = "triangle", 
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(1600, start);
   filter.Q.setValueAtTime(0.7, start);
+  const adjVolume = (Number.isFinite(musicVolume) ? musicVolume : 0.42) * volume;
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.08);
+  gain.gain.exponentialRampToValueAtTime(adjVolume, start + 0.08);
   gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
   oscillator.connect(filter);
@@ -675,21 +861,265 @@ function scheduleBackgroundMusic() {
   });
 }
 
-function startBackgroundMusic() {
-  if (!musicEnabled || musicTimer) {
+// --- Music playback: local files from /music/ with synth fallback.
+let fileMusicList = [];
+let musicAudioElement = null;
+let musicFileIndex = 0;
+let musicStartPromise = null;
+let musicPlayBlocked = false;
+let musicMode = "none";
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function normalizeMusicPath(path) {
+  if (typeof path !== "string") {
+    return null;
+  }
+
+  const value = path.trim();
+  if (!value) {
+    return null;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("//") || value.startsWith("/")) {
+    return value;
+  }
+
+  return value.startsWith("music/") ? value : `music/${value}`;
+}
+
+function normalizeMusicFiles(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  const audioExtension = /\.(mp3|ogg|wav|m4a|aac)(?:[?#].*)?$/i;
+  const files = list
+    .map(normalizeMusicPath)
+    .filter(Boolean)
+    .filter((path) => audioExtension.test(path));
+
+  return Array.from(new Set(files));
+}
+
+function sameMusicFiles(a, b) {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  const files = new Set(a);
+  return b.every((file) => files.has(file));
+}
+
+function isFileMusicRunning() {
+  return Boolean(
+    musicAudioElement
+      && musicAudioElement.src
+      && !musicAudioElement.paused
+      && !musicAudioElement.ended
+  );
+}
+
+function updatePlayMusicButton() {
+  if (!elements.playMusicButton) {
     return;
+  }
+
+  const shouldShow = musicEnabled && !isFileMusicRunning() && !musicTimer;
+  elements.playMusicButton.style.display = shouldShow ? "" : "none";
+  elements.playMusicButton.title = shouldShow ? "Tocar musica" : "Musica activa";
+  elements.playMusicButton.setAttribute("aria-label", elements.playMusicButton.title);
+}
+
+async function loadMusicFiles() {
+  // Try playlist.json first
+  try {
+    const plist = await fetch('music/playlist.json');
+    if (plist.ok) {
+      const data = await plist.json();
+      const list = Array.isArray(data) ? data : Array.isArray(data.tracks) ? data.tracks : [];
+      const mapped = normalizeMusicFiles(list);
+      if (mapped.length) {
+        console.info('Loaded music playlist.json with', mapped.length, 'entries');
+        return mapped;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  // Fallback: try to fetch directory index HTML and parse links (works with simple static servers)
+  try {
+    const res = await fetch('music/');
+    if (!res.ok) {
+      throw new Error('Music directory unavailable');
+    }
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('text/html')) {
+      const html = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const anchors = Array.from(doc.querySelectorAll('a'));
+      const musicBase = new URL('music/', location.href);
+      const files = normalizeMusicFiles(anchors
+        .map((a) => a.getAttribute('href'))
+        .filter(Boolean)
+        .map((href) => {
+          try {
+            return new URL(href, musicBase).href;
+          } catch (e) {
+            return href;
+          }
+        }));
+      console.info('Discovered music files from directory index:', files);
+      if (files.length) {
+        return files;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return normalizeMusicFiles(DEFAULT_MUSIC_FILES);
+}
+
+function ensureMusicAudioElement() {
+  if (!musicAudioElement) {
+    musicAudioElement = new Audio();
+    musicAudioElement.preload = 'auto';
+    musicAudioElement.volume = musicVolume;
+    musicAudioElement.addEventListener('ended', playNextMusicFile);
+    musicAudioElement.addEventListener('playing', () => {
+      musicMode = "file";
+      musicPlayBlocked = false;
+      updatePlayMusicButton();
+    });
+    musicAudioElement.addEventListener('pause', updatePlayMusicButton);
+    musicAudioElement.addEventListener('error', () => {
+      if (!musicEnabled || !fileMusicList.length) {
+        updatePlayMusicButton();
+        return;
+      }
+
+      if (fileMusicList.length > 1) {
+        playNextMusicFile();
+        return;
+      }
+
+      musicPlayBlocked = true;
+      updatePlayMusicButton();
+    });
+  }
+
+  return musicAudioElement;
+}
+
+async function playCurrentMusicFile() {
+  if (!fileMusicList.length) {
+    return false;
+  }
+
+  const audio = ensureMusicAudioElement();
+  if (!audio.src) {
+    audio.src = fileMusicList[musicFileIndex];
+  }
+
+  audio.volume = musicVolume;
+  audio.muted = false;
+
+  try {
+    await audio.play();
+    musicMode = "file";
+    musicPlayBlocked = false;
+    updatePlayMusicButton();
+    return true;
+  } catch (e) {
+    musicPlayBlocked = true;
+    updatePlayMusicButton();
+    console.info('Music playback was blocked; press the play button to start it.', e);
+    return false;
+  }
+}
+
+function playNextMusicFile() {
+  if (!musicEnabled || !fileMusicList.length || !musicAudioElement) {
+    return;
+  }
+
+  musicFileIndex = (musicFileIndex + 1) % fileMusicList.length;
+  musicAudioElement.src = fileMusicList[musicFileIndex];
+  void playCurrentMusicFile();
+}
+
+async function startMusicPlayback(files) {
+  const nextFiles = normalizeMusicFiles(files);
+  if (!nextFiles.length) {
+    return false;
+  }
+
+  const audio = ensureMusicAudioElement();
+  if (!sameMusicFiles(fileMusicList, nextFiles)) {
+    fileMusicList = nextFiles.slice();
+    shuffleArray(fileMusicList);
+    musicFileIndex = 0;
+    audio.src = fileMusicList[musicFileIndex];
+  } else if (!audio.src) {
+    audio.src = fileMusicList[musicFileIndex];
+  }
+
+  if (isFileMusicRunning()) {
+    musicMode = "file";
+    musicPlayBlocked = false;
+    updatePlayMusicButton();
+    return true;
+  }
+
+  return playCurrentMusicFile();
+}
+
+function stopMusicPlayback() {
+  try {
+    if (musicAudioElement) {
+      musicAudioElement.pause();
+      musicAudioElement.removeAttribute('src');
+      musicAudioElement.load();
+      musicAudioElement = null;
+    }
+  } catch (e) {
+    // ignore
+  }
+  fileMusicList = [];
+  musicFileIndex = 0;
+  if (musicMode === "file") {
+    musicMode = "none";
+  }
+  updatePlayMusicButton();
+}
+
+function startSynthMusic() {
+  if (musicTimer) {
+    return true;
   }
 
   const context = getAudioContext();
   if (!context) {
-    return;
+    return false;
   }
 
+  musicMode = "synth";
+  musicPlayBlocked = false;
   scheduleBackgroundMusic();
   musicTimer = window.setInterval(scheduleBackgroundMusic, MUSIC_LOOP_SECONDS * 1000);
+  updatePlayMusicButton();
+  return true;
 }
 
-function stopBackgroundMusic() {
+function stopSynthMusic() {
   if (musicTimer) {
     window.clearInterval(musicTimer);
     musicTimer = null;
@@ -697,14 +1127,79 @@ function stopBackgroundMusic() {
 
   for (const node of musicNodes) {
     try {
-      node.gain.gain.cancelScheduledValues(audioContext.currentTime);
-      node.gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-      node.oscillator.stop(audioContext.currentTime + 0.02);
+      if (audioContext) {
+        node.gain.gain.cancelScheduledValues(audioContext.currentTime);
+        node.gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        node.oscillator.stop(audioContext.currentTime + 0.02);
+      }
     } catch {
       // Some scheduled nodes may already be stopped.
     }
   }
   musicNodes = [];
+
+  if (musicMode === "synth") {
+    musicMode = "none";
+  }
+  updatePlayMusicButton();
+}
+
+function startBackgroundMusic() {
+  if (!musicEnabled) {
+    updatePlayMusicButton();
+    return Promise.resolve(false);
+  }
+
+  if (isFileMusicRunning() || musicTimer) {
+    musicPlayBlocked = false;
+    updatePlayMusicButton();
+    return Promise.resolve(true);
+  }
+
+  if (!musicStartPromise) {
+    const knownFiles = fileMusicList.length ? fileMusicList : DEFAULT_MUSIC_FILES;
+    if (knownFiles.length) {
+      void startMusicPlayback(knownFiles);
+    }
+  }
+
+  if (musicStartPromise) {
+    return musicStartPromise;
+  }
+
+  musicStartPromise = loadMusicFiles().then((files) => {
+    console.info('loadMusicFiles returned', files && files.length ? files.length : 0, 'files');
+    if (!musicEnabled) {
+      return false;
+    }
+
+    if (files && files.length) {
+      stopSynthMusic();
+      return startMusicPlayback(files);
+    }
+
+    return startSynthMusic();
+  }).catch(() => {
+    if (!musicEnabled) {
+      return false;
+    }
+
+    return startSynthMusic();
+  }).finally(() => {
+    musicStartPromise = null;
+    updatePlayMusicButton();
+  });
+
+  return musicStartPromise;
+}
+
+function stopBackgroundMusic() {
+  musicStartPromise = null;
+  musicPlayBlocked = false;
+  stopSynthMusic();
+  stopMusicPlayback();
+  musicMode = "none";
+  updatePlayMusicButton();
 }
 
 function unlockAudio() {
@@ -734,6 +1229,7 @@ function renderMusicButton() {
   elements.musicButton.title = musicEnabled ? "Silenciar musica" : "Activar musica";
   elements.musicButton.setAttribute("aria-label", elements.musicButton.title);
   elements.musicButton.querySelector("span").textContent = musicEnabled ? "B" : "B-";
+  updatePlayMusicButton();
 }
 
 function toggleSound() {
@@ -785,6 +1281,7 @@ function normalizeCardEntry(entry) {
   entry.xp = cardXp(entry);
   entry.copies = Math.max(0, Math.floor(Number(entry.copies || 0)));
   entry.enchant = Math.max(0, Math.floor(Number(entry.enchant || 0)));
+  entry.uniqueUnlocked = entry.uniqueUnlocked === true;
   return entry;
 }
 
@@ -880,6 +1377,122 @@ function diamondChance() {
   return Math.round((diamond.weight / total) * 100);
 }
 
+function roleById(roleId) {
+  return roleDefinitions.find((role) => role.id === roleId) || roleDefinitions[0];
+}
+
+function cardRole(card) {
+  const id = card.id;
+
+  if (/guard|shield|warden|golem|titan|giant|storm|tarrasque|serpent|minotaur|gorgon|crown|bone-dice|eternal-king/.test(id)) {
+    return roleById("defense");
+  }
+
+  if (/astral|ashen|lich|void|moon|mirror|star|eclipse|final|forgotten|infinite|celestial|aboleth|medusa|banshee|night|obsidian|elder|abyssal|ancient|cauldron/.test(id)) {
+    return roleById("magic");
+  }
+
+  if (/river|wild|harpy|sun|doc|ivy|rookie|wolf|owlbear|amber|empress|green-hourglass/.test(id)) {
+    return roleById("support");
+  }
+
+  if (/copper|gold|silver|tin|rat-lantern|mud|goblin|street|spark|scribe|pact|forge|engine|map|root|hourglass|lantern/.test(id)) {
+    return roleById("economy");
+  }
+
+  return roleById("attack");
+}
+
+function cardUniqueUnlocked(cardId, customState = state) {
+  return customState.owned[cardId]?.uniqueUnlocked === true;
+}
+
+function uniqueAbilityForCard(card) {
+  return uniqueAbilitiesByRole[cardRole(card).id] || uniqueAbilitiesByRole.attack;
+}
+
+function roleScores(customState = state) {
+  return roleDefinitions.reduce((scores, role) => {
+    scores[role.id] = 0;
+    return scores;
+  }, {});
+}
+
+function collectionRoleScores(customState = state) {
+  const scores = roleScores(customState);
+
+  for (const card of cards) {
+    const entry = customState.owned[card.id];
+    const level = cardLevel(entry);
+    if (level <= 0) {
+      continue;
+    }
+
+    const role = cardRole(card);
+    const uniqueBonus = cardUniqueUnlocked(card.id, customState) ? 4 : 0;
+    scores[role.id] += level + enchantLevel(entry) * 0.4 + uniqueBonus;
+  }
+
+  return scores;
+}
+
+function uniqueRoleCounts(customState = state) {
+  const counts = roleScores(customState);
+
+  for (const card of cards) {
+    if (cardUniqueUnlocked(card.id, customState)) {
+      counts[cardRole(card).id] += 1;
+    }
+  }
+
+  return counts;
+}
+
+function passiveModifiers(customState = state) {
+  const scores = collectionRoleScores(customState);
+  const uniqueCounts = uniqueRoleCounts(customState);
+
+  return {
+    incomeBonus: Math.min(0.65, scores.economy * 0.004 + uniqueCounts.economy * 0.025),
+    pullXpBonus: Math.min(6, Math.floor(scores.support / 18) + uniqueCounts.support),
+    enchantDiscount: Math.min(0.35, scores.magic * 0.003 + uniqueCounts.magic * 0.02),
+    expeditionRewardBonus: Math.min(0.85, scores.attack * 0.006 + uniqueCounts.attack * 0.08),
+    expeditionTimeDiscount: Math.min(0.45, scores.defense * 0.004 + uniqueCounts.defense * 0.04),
+    uniqueChanceBonus: Math.min(0.012, scores.support * 0.00015 + uniqueCounts.support * 0.001)
+  };
+}
+
+function xpGainPerPull(customState = state) {
+  return XP_PER_CARD_PULL + passiveModifiers(customState).pullXpBonus;
+}
+
+function formatPercent(value, decimals = 0) {
+  return `${(value * 100).toFixed(decimals)}%`;
+}
+
+function uniqueAbilityChance(card, customState = state) {
+  const rarityRank = Math.max(0, rarities.findIndex((rarity) => rarity.id === card.rarity));
+  return Math.min(0.035, BASE_UNIQUE_CHANCE + rarityRank * 0.002 + passiveModifiers(customState).uniqueChanceBonus);
+}
+
+function rollUniqueAbility(card, entry) {
+  if (entry?.uniqueUnlocked) {
+    return false;
+  }
+
+  return Math.random() < uniqueAbilityChance(card);
+}
+
+function passiveSummary() {
+  const modifiers = passiveModifiers();
+  const parts = [
+    `+${formatPercent(modifiers.incomeBonus, 1)} oro`,
+    `+${modifiers.pullXpBonus} XP/tirada`,
+    `-${formatPercent(modifiers.enchantDiscount, 1)} encanto`
+  ];
+  return parts.join(", ");
+}
+
 function cardMultiplier(cardId, customState = state) {
   const entry = customState.owned[cardId];
   if (!entry) {
@@ -893,11 +1506,14 @@ function cardIncome(card, customState = state) {
   if (!entry) {
     return 0;
   }
-  return cardLevel(entry) * card.income * cardMultiplier(card.id, customState);
+  const role = cardRole(card);
+  const uniqueMultiplier = role.id === "economy" && cardUniqueUnlocked(card.id, customState) ? 1.08 : 1;
+  return cardLevel(entry) * card.income * cardMultiplier(card.id, customState) * uniqueMultiplier;
 }
 
 function totalIncome(customState = state) {
-  return cards.reduce((sum, card) => sum + cardIncome(card, customState), 0);
+  const baseIncome = cards.reduce((sum, card) => sum + cardIncome(card, customState), 0);
+  return baseIncome * (1 + passiveModifiers(customState).incomeBonus);
 }
 
 function totalLevels() {
@@ -906,6 +1522,501 @@ function totalLevels() {
 
 function discoveredCards() {
   return cards.filter((card) => cardXp(state.owned[card.id]) > 0).length;
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function expeditionById(expeditionId) {
+  return expeditions.find((expedition) => expedition.id === expeditionId);
+}
+
+function rolePower(roleId, customState = state) {
+  return collectionRoleScores(customState)[roleId] || 0;
+}
+
+function cardPower(cardId, customState = state) {
+  const card = cardById(cardId);
+  const entry = card ? customState.owned[card.id] : null;
+  const level = cardLevel(entry);
+  if (!card || level <= 0) {
+    return 0;
+  }
+
+  const rarityRank = Math.max(0, rarities.findIndex((rarity) => rarity.id === card.rarity));
+  const uniqueBonus = cardUniqueUnlocked(card.id, customState) ? 5 : 0;
+  return level + enchantLevel(entry) * 2 + rarityRank * 3 + uniqueBonus;
+}
+
+function selectedExpeditionCard() {
+  const card = state.selectedCardId ? cardById(state.selectedCardId) : null;
+  const entry = card ? state.owned[card.id] : null;
+  return card && cardLevel(entry) > 0 ? card : null;
+}
+
+function cardInExpedition(cardId) {
+  return Object.values(state.expeditions || {}).some((expeditionState) => expeditionState?.cardId === cardId);
+}
+
+function expeditionUnlocked(expedition) {
+  return totalLevels() >= expedition.unlockLevel;
+}
+
+function expeditionDuration(expedition, cardId = state.selectedCardId) {
+  const power = cardPower(cardId);
+  const shortfall = Math.max(0, expedition.recommendedPower - power);
+  const penalty = expedition.recommendedPower > 0 ? 1 + (shortfall / expedition.recommendedPower) * 0.35 : 1;
+  const discount = passiveModifiers().expeditionTimeDiscount;
+  return Math.max(60, Math.round(expedition.duration * penalty * (1 - discount)));
+}
+
+function expeditionRewardGold(expedition, cardId = state.selectedCardId) {
+  const power = cardPower(cardId);
+  const modifier = passiveModifiers().expeditionRewardBonus + Math.min(0.8, power * 0.012);
+  return Math.floor(expedition.gold * (1 + modifier));
+}
+
+function expeditionRewardXp(expedition, cardId = state.selectedCardId) {
+  return expedition.xp + Math.floor(cardPower(cardId) / 18) + Math.floor(passiveModifiers().pullXpBonus / 2);
+}
+
+function expeditionRemaining(expeditionState) {
+  if (!expeditionState) {
+    return 0;
+  }
+
+  return Math.max(0, Number(expeditionState.startedAt || 0) + Number(expeditionState.duration || 0) - Date.now());
+}
+
+function movesForCard(card) {
+  return roleMoves[cardRole(card).id] || roleMoves.attack;
+}
+
+function battleStatsForCard(card) {
+  const entry = ownedEntry(card.id);
+
+  const level = cardLevel(entry);
+  const rarity = rarityById(card.rarity);
+  const material = currentEnchantMaterial(entry);
+
+  // =========================
+  // RAREZA
+  // =========================
+
+  const rarityStats = {
+    common:     { hp: 1,   atk: 1 },
+    uncommon:   { hp: 1.1, atk: 1.1 },
+    rare:       { hp: 1.2, atk: 1.2 },
+    veryRare:   { hp: 1.35, atk: 1.35 },
+    legendary:  { hp: 1.55, atk: 1.55 },
+    artifact:   { hp: 1.8, atk: 1.8 },
+    mythic:     { hp: 2.2, atk: 2.2 },
+    special:    { hp: 4, atk: 4 }
+  };
+
+  const rarityBonus = rarityStats[rarity.id] || rarityStats.common;
+
+  // =========================
+  // BASE
+  // =========================
+
+  let hp =
+    80 +
+    (level * 18);
+
+  let attack =
+    12 +
+    (level * 5);
+
+  // =========================
+  // RAREZA
+  // =========================
+
+  hp *= rarityBonus.hp;
+  attack *= rarityBonus.atk;
+
+  // =========================
+  // MINERAL
+  // =========================
+
+  hp *= Math.sqrt(material.multiplier || 1);
+  attack *= Math.sqrt(material.multiplier || 1);
+
+  // =========================
+  // UNIQUE
+  // =========================
+
+  if (cardUniqueUnlocked(card.id)) {
+    hp *= 1.12;
+    attack *= 1.18;
+  }
+
+  // =========================
+  // ROLES
+  // =========================
+
+  const role = cardRole(card);
+
+  switch (role.id) {
+    case "defense":
+      hp *= 1.35;
+      break;
+
+    case "attack":
+      attack *= 1.22;
+      hp *= 0.92;
+      break;
+
+    case "magic":
+      attack *= 1.15;
+      break;
+
+    case "support":
+      hp *= 1.08;
+      break;
+
+    case "economy":
+      attack *= 0.9;
+      hp *= 0.9;
+      break;
+  }
+
+  return {
+    maxHp: Math.floor(hp),
+    attack: Math.floor(attack)
+  };
+}
+
+function battleDifficulty(card) {
+  const entry = state.owned[card.id];
+  return Math.max(1, cardLevel(entry) + Math.floor(totalLevels() / 18));
+}
+
+function createBattle(card) {
+  const stats = battleStatsForCard(card);
+
+  const level = cardLevel(ownedEntry(card.id));
+  const playerTotalLevels = totalLevels();
+
+  // =========================
+  // BASE
+  // =========================
+
+  let enemyHp =
+    55 +
+    (level * 20) +
+    (Math.log10(playerTotalLevels + 1) * 120)
+
+  let enemyAttack =
+    7 +
+    (level * 4.5) +
+    (playerTotalLevels * 0.7);
+
+  // =========================
+  // CHANCES SEGUN PROGRESO
+  // =========================
+
+  let easyChance = 0.35;
+  let normalChance = 0.65;
+  let hardChance = 0;
+  let impossibleChance = 0;
+
+  // Difficult desbloqueado
+  if (playerTotalLevels >= 25) {
+    hardChance = 0.12;
+    normalChance -= hardChance;
+  }
+
+  // Impossible desbloqueado
+  if (playerTotalLevels >= 60) {
+    impossibleChance = 0.03;
+    normalChance -= impossibleChance;
+  }
+
+  // =========================
+  // ROLL
+  // =========================
+
+  const roll = Math.random();
+
+  let multiplierHp = 1;
+  let multiplierAttack = 1;
+  let rewardMultiplier = 1;
+
+  if (roll <= easyChance) {
+
+    // FACIL
+    multiplierHp = 0.75;
+    multiplierAttack = 0.7;
+    rewardMultiplier = 0.85;
+
+  } else if (
+    roll <= easyChance + normalChance
+  ) {
+
+    // NORMAL
+    multiplierHp = 1;
+    multiplierAttack = 1;
+
+  } else if (
+    roll <= easyChance + normalChance + hardChance
+  ) {
+
+    // DIFICIL
+    multiplierHp = 1.8;
+    multiplierAttack = 1.45;
+    rewardMultiplier = 2;
+
+  } else {
+
+    // IMPOSIBLE
+    multiplierHp = 4;
+    multiplierAttack = 2.6;
+    rewardMultiplier = 5;
+  }
+
+  // =========================
+  // RANDOM EXTRA
+  // =========================
+
+  enemyHp *= multiplierHp;
+  enemyAttack *= multiplierAttack;
+
+  enemyHp *= 0.9 + Math.random() * 0.2;
+  enemyAttack *= 0.9 + Math.random() * 0.2;
+
+  enemyHp = Math.floor(enemyHp);
+  enemyAttack = Math.floor(enemyAttack);
+
+  return {
+    cardId: card.id,
+
+    enemyName:
+      battleEnemies[
+        Math.floor(Math.random() * battleEnemies.length)
+      ],
+
+    enemyHp,
+    enemyMaxHp: enemyHp,
+
+    enemyAttack,
+
+    playerHp: stats.maxHp,
+    playerMaxHp: stats.maxHp,
+
+    playerAttack: stats.attack,
+
+    shield: 0,
+
+    rewardGold: Math.floor(
+      (40 + level * 12) * rewardMultiplier
+    ),
+
+    rewardXp: Math.floor(
+      (5 + level * 2) * rewardMultiplier
+    ),
+
+    bonusGold: 0,
+    bonusXp: 0,
+
+    outcome: null,
+
+    log: [
+      "La pelea empieza."
+    ]
+  };
+}
+
+function selectedBattleCard() {
+  const card = state.selectedCardId ? cardById(state.selectedCardId) : null;
+  const entry = card ? state.owned[card.id] : null;
+  return card && cardLevel(entry) > 0 ? card : null;
+}
+
+function startBattle() {
+  const card = selectedBattleCard();
+  if (!card) {
+    return;
+  }
+
+  unlockAudio();
+  playSound("ui");
+  state.battle = createBattle(card);
+  renderBattle();
+  saveState();
+}
+
+function finishBattle(won) {
+  if (!state.battle || state.battle.outcome) {
+    return;
+  }
+
+  const battle = state.battle;
+  const card = cardById(battle.cardId);
+  battle.outcome = won ? "won" : "lost";
+
+  if (won && card) {
+    const rewardGold = Math.floor(Number(battle.rewardGold || 0) * (1 + Number(battle.bonusGold || 0)));
+    const rewardXp = Math.floor(Number(battle.rewardXp || 0) + Number(battle.bonusXp || 0));
+    const entry = ownedEntry(card.id);
+    entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
+    normalizeCardEntry(entry);
+    state.gold += rewardGold;
+    battle.log.unshift(`Victoria: +${formatNumber(rewardGold)} oro, +${rewardXp} XP.`);
+    state.log.unshift({
+      type: "battle",
+      cardId: card.id,
+      rewardGold,
+      rewardXp,
+      time: Date.now()
+    });
+    state.log = state.log.slice(0, 8);
+    playSound("levelUp", { delay: 0.08 });
+  } else {
+    battle.log.unshift("Derrota: la carta se retira sin recompensa.");
+    playSound("enchantFail", { delay: 0.05 });
+  }
+
+  renderAll();
+  saveState();
+}
+
+function useBattleMove(moveId) {
+  const battle = state.battle;
+  if (!battle || battle.outcome) {
+    return;
+  }
+
+  const card = cardById(battle.cardId);
+  if (!card) {
+    state.battle = null;
+    renderBattle();
+    saveState();
+    return;
+  }
+
+  const move = movesForCard(card).find((item) => item.id === moveId);
+  if (!move) {
+    return;
+  }
+
+  unlockAudio();
+  const variance = 0.9 + Math.random() * 0.2;
+  let damage = Math.max(1, Math.floor(battle.playerAttack * move.damage * variance));
+  if (move.execute && battle.enemyHp <= battle.enemyMaxHp * 0.5) {
+    damage = Math.floor(damage * 1.75);
+  }
+
+  battle.enemyHp = Math.max(0, battle.enemyHp - damage);
+  if (move.shield) {
+    battle.shield += Math.floor(battle.playerAttack * move.shield);
+  }
+  if (move.heal) {
+    battle.playerHp = Math.min(battle.playerMaxHp, battle.playerHp + Math.floor(battle.playerAttack * move.heal));
+  }
+  if (move.goldBonus) {
+    battle.bonusGold += move.goldBonus;
+  }
+  if (move.xpBonus) {
+    battle.bonusXp += move.xpBonus;
+  }
+
+  battle.log.unshift(`${card.name}: ${move.name} causa ${damage}.`);
+  playSound("pull", { rarityId: card.rarity, delay: 0.02 });
+
+  if (battle.enemyHp <= 0) {
+    finishBattle(true);
+    return;
+  }
+
+  const enemyDamageBase = Math.floor(battle.enemyAttack * (0.85 + Math.random() * 0.28));
+  const blocked = Math.min(battle.shield, enemyDamageBase);
+  const enemyDamage = Math.max(0, enemyDamageBase - blocked);
+  battle.shield = Math.max(0, battle.shield - blocked);
+  battle.playerHp = Math.max(0, battle.playerHp - enemyDamage);
+  battle.log.unshift(`${battle.enemyName} golpea por ${enemyDamage}${blocked ? ` (${blocked} bloqueado)` : ""}.`);
+
+  if (battle.playerHp <= 0) {
+    finishBattle(false);
+    return;
+  }
+
+  battle.log = battle.log.slice(0, 5);
+  renderBattle();
+  saveState();
+}
+
+function startExpedition(expeditionId) {
+  const expedition = expeditionById(expeditionId);
+  const card = selectedExpeditionCard();
+  if (!expedition || !card || !expeditionUnlocked(expedition) || state.expeditions[expeditionId] || cardInExpedition(card.id)) {
+    return;
+  }
+
+  unlockAudio();
+  playSound("ui");
+  state.expeditions[expeditionId] = {
+    cardId: card.id,
+    startedAt: Date.now(),
+    duration: expeditionDuration(expedition, card.id) * 1000,
+    rewardGold: expeditionRewardGold(expedition, card.id),
+    rewardXp: expeditionRewardXp(expedition, card.id)
+  };
+  renderExpeditions();
+  saveState();
+}
+
+function claimExpedition(expeditionId) {
+  const expedition = expeditionById(expeditionId);
+  const active = state.expeditions[expeditionId];
+  if (!expedition || !active || expeditionRemaining(active) > 0) {
+    return;
+  }
+
+  unlockAudio();
+  const rewardGold = Math.max(0, Math.floor(Number(active.rewardGold || 0)));
+  const rewardXp = Math.max(0, Math.floor(Number(active.rewardXp || expedition.xp)));
+  state.gold += rewardGold;
+
+  const assignedCard = active.cardId ? cardById(active.cardId) : null;
+  if (assignedCard && state.owned[assignedCard.id]) {
+    const entry = ownedEntry(assignedCard.id);
+    entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
+    normalizeCardEntry(entry);
+  } else {
+    for (const card of cards) {
+      if (cardRole(card).id !== expedition.role) {
+        continue;
+      }
+
+      const entry = state.owned[card.id];
+      if (!entry || cardLevel(entry) <= 0) {
+        continue;
+      }
+
+      entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
+      normalizeCardEntry(entry);
+    }
+  }
+
+  delete state.expeditions[expeditionId];
+  state.log.unshift({
+    type: "expedition",
+    expeditionId,
+    cardId: assignedCard?.id || null,
+    rewardGold,
+    rewardXp,
+    role: expedition.role,
+    time: Date.now()
+  });
+  state.log = state.log.slice(0, 8);
+  playSound("levelUp", { delay: 0.08 });
+  renderAll();
+  saveState();
 }
 
 function gachaCost(gacha) {
@@ -943,6 +2054,33 @@ function clearCardRoulette() {
   cardRoulette = null;
 }
 
+function applyPendingPull(finalCardId, pending) {
+  if (!pending) {
+    return;
+  }
+
+  const previousTotalLevels = totalLevels();
+  const entry = ownedEntry(finalCardId);
+  entry.copies += pending.copies;
+  entry.xp = Math.min(cardXp(entry) + pending.xpGain, maxCardXp());
+  if (pending.uniqueUnlocked) {
+    entry.uniqueUnlocked = true;
+  }
+  normalizeCardEntry(entry);
+
+  const nextTotalLevels = totalLevels();
+  const unlockedExpeditions = expeditions
+    .filter((expedition) => previousTotalLevels < expedition.unlockLevel && nextTotalLevels >= expedition.unlockLevel)
+    .map((expedition) => expedition.id);
+
+  state.lastReveal = {
+    cardId: finalCardId,
+    uniqueUnlocked: Boolean(pending.uniqueUnlocked),
+    unlockedExpeditions,
+    time: Date.now()
+  };
+}
+
 function completeCardRouletteImmediately() {
   if (!cardRoulette || cardRoulette.finished) {
     return;
@@ -954,11 +2092,7 @@ function completeCardRouletteImmediately() {
   }
 
   if (cardRoulette.pending) {
-    const pending = cardRoulette.pending;
-    const entry = ownedEntry(finalCardId);
-    entry.copies += pending.copies;
-    entry.xp = Math.min(cardXp(entry) + pending.xpGain, maxCardXp());
-    normalizeCardEntry(entry);
+    applyPendingPull(finalCardId, cardRoulette.pending);
   }
 
   cardRoulette.finished = true;
@@ -1005,11 +2139,7 @@ function startCardRoulette(finalCardId, pending = null) {
       cardRoulette.timer = window.setTimeout(() => {
         if (cardRoulette?.finalCardId === finalCardId) {
           if (cardRoulette.pending) {
-            const pending = cardRoulette.pending;
-            const entry = ownedEntry(finalCardId);
-            entry.copies += pending.copies;
-            entry.xp = Math.min(cardXp(entry) + pending.xpGain, maxCardXp());
-            normalizeCardEntry(entry);
+            applyPendingPull(finalCardId, cardRoulette.pending);
           }
           cardRoulette.finished = true;
           state.lastCardId = finalCardId;
@@ -1041,7 +2171,7 @@ function enchantCost(cardId) {
     return Infinity;
   }
 
-  return rarity.baseEnchant;
+  return Math.max(1, Math.floor(rarity.baseEnchant * (1 - passiveModifiers().enchantDiscount)));
 }
 
 function pullGacha(gachaId) {
@@ -1071,10 +2201,12 @@ function pullGacha(gachaId) {
   const currentEntry = state.owned[card.id];
   const previousLevel = cardLevel(currentEntry);
   const previousXp = cardXp(currentEntry);
-  const nextXp = previousLevel >= MAX_CARD_LEVEL ? previousXp : Math.min(previousXp + XP_PER_CARD_PULL, maxCardXp());
+  const pullXp = xpGainPerPull();
+  const nextXp = previousLevel >= MAX_CARD_LEVEL ? previousXp : Math.min(previousXp + pullXp, maxCardXp());
   const xpGain = nextXp - previousXp;
   const nextLevel = cardLevel({ ...currentEntry, xp: nextXp });
   const progress = cardXpProgress({ ...currentEntry, xp: nextXp });
+  const uniqueUnlocked = rollUniqueAbility(card, currentEntry);
 
   state.selectedCardId = card.id;
   state.log.unshift({
@@ -1082,13 +2214,14 @@ function pullGacha(gachaId) {
     gachaId: gacha.id,
     level: nextLevel,
     leveledUp: nextLevel > previousLevel,
-    gainedXp: nextXp > previousXp ? XP_PER_CARD_PULL : 0,
+    gainedXp: xpGain,
+    uniqueUnlocked,
     xpCurrent: progress.current,
     xpRequired: progress.required,
     time: Date.now()
   });
   state.log = state.log.slice(0, 8);
-  startCardRoulette(card.id, { copies: 1, xpGain });
+  startCardRoulette(card.id, { copies: 1, xpGain, uniqueUnlocked });
 
   if (rarityRank >= 4) {
     playSound("rarePull", { rarityId, delay: 0.18 });
@@ -1171,25 +2304,28 @@ function createCardElement(card, options = {}) {
   const preview = Boolean(options.preview);
   const lockedPreview = Boolean(options.locked && !options.roulette);
   const rarity = rarityById(card.rarity);
+  const role = cardRole(card);
   const level = cardLevel(entry);
   const xpProgress = cardXpProgress(entry);
   const isRoulettePreview = Boolean(options.roulette && preview && !options.reveal);
   const unlocked = !lockedPreview && (preview || level > 0 || options.reveal || isRoulettePreview);
   const material = lockedPreview || isRoulettePreview || preview ? baseEnchantMaterial : currentEnchantMaterial(entry);
   const isEnchanted = !preview && !isRoulettePreview && !lockedPreview && unlocked && enchantLevel(entry) > 0;
+  const hasUnique = !preview && !isRoulettePreview && !lockedPreview && cardUniqueUnlocked(card.id);
   const isFlashing = unlocked && enchantEffect?.cardId === card.id && Date.now() < enchantEffect.until;
   const effectMaterial = isFlashing ? enchantMaterialById(enchantEffect.materialId) : material;
   const shell = document.createElement("article");
-  shell.className = `card-shell ${options.big ? "big" : ""} ${options.mini ? "mini" : ""} ${unlocked ? "" : "locked"} ${isEnchanted ? "enchanted-card" : ""} ${isFlashing ? "enchant-flash" : ""} ${options.roulette ? "roulette-card" : ""} ${options.rouletteFinal ? "roulette-final" : ""}`;
+  shell.className = `card-shell ${options.big ? "big" : ""} ${options.mini ? "mini" : ""} ${unlocked ? "" : "locked"} ${isEnchanted ? "enchanted-card" : ""} ${hasUnique ? "unique-card" : ""} ${isFlashing ? "enchant-flash" : ""} ${options.roulette ? "roulette-card" : ""} ${options.rouletteFinal ? "roulette-final" : ""}`;
   shell.style.setProperty("--rarity-color", rarity.color);
   shell.style.setProperty("--mineral-color", unlocked ? effectMaterial.color : baseEnchantMaterial.color);
+  shell.style.setProperty("--role-color", role.color);
 
   const showActualCardName = options.roulette || unlocked || options.reveal;
   if (showActualCardName) {
     shell.classList.add('has-art');
   }
   const displayedName = showActualCardName ? card.name : "Carta oculta";
-  const displayedRarity = showActualCardName ? rarity.name : "???";
+  const displayedRarity = showActualCardName ? `${rarity.name} - ${role.name}` : "???";
   const displayedIncome = options.roulette ? "Girando" : (preview ? "Girando" : (unlocked ? `${formatNumber(cardIncome(card))}/s` : "???"));
   const copyText = options.roulette ? "??" : (unlocked ? `Nv.${level}` : "Nv.0");
   const enchantText = options.roulette ? "???" : (unlocked ? `${material.short} x${formatMultiplier(material.multiplier)}` : "???");
@@ -1200,8 +2336,10 @@ function createCardElement(card, options = {}) {
 
   shell.innerHTML = `
     <span class="enchant-glint" aria-hidden="true"></span>
+    <span class="unique-star" aria-hidden="true">${hasUnique ? "U" : ""}</span>
     <div class="card-topline">
       <span class="rarity-short">${rarity.short}</span>
+      <span class="role-short">${showActualCardName ? role.short : "??"}</span>
       <span class="copy-count">${copyText}</span>
     </div>
     <div class="card-art" aria-hidden="true"></div>
@@ -1344,7 +2482,7 @@ function renderFilters() {
 function renderCollection() {
   const filteredCards = state.filter === "all" ? cards : cards.filter((card) => card.rarity === state.filter);
   elements.collectionGrid.innerHTML = "";
-  elements.collectionSummary.textContent = `${discoveredCards()} descubiertas de ${cards.length}. ${totalLevels()} niveles totales con XP por tirada.`;
+  elements.collectionSummary.textContent = `${discoveredCards()} descubiertas de ${cards.length}. ${totalLevels()} niveles totales. Pasivas: ${passiveSummary()}.`;
 
   for (const card of filteredCards) {
     const button = document.createElement("button");
@@ -1356,12 +2494,28 @@ function renderCollection() {
       state.selectedCardId = card.id;
       renderCollection();
       renderSelected();
+      renderBattle();
+      renderExpeditions();
       saveState();
     });
 
     button.appendChild(createCardElement(card, { mini: true }));
     elements.collectionGrid.appendChild(button);
   }
+}
+
+function revealSummary(card, rarity, entry, xpProgress, material) {
+  const role = cardRole(card);
+  const xpText = xpProgress.isMax ? "XP maximo" : `${xpProgress.current}/${xpProgress.required} XP`;
+  const base = `${rarity.name} - ${role.name}. Nivel ${cardLevel(entry)}/${MAX_CARD_LEVEL}, ${xpText}. ${material.name} x${formatMultiplier(material.multiplier)}. Produce ${formatNumber(cardIncome(card))} oro por segundo.`;
+  const lastReveal = state.lastReveal?.cardId === card.id ? state.lastReveal : null;
+  const unlocks = lastReveal?.unlockedExpeditions?.length
+    ? ` Expedicion desbloqueada: ${lastReveal.unlockedExpeditions.map((id) => expeditionById(id)?.name).filter(Boolean).join(", ")}.`
+    : "";
+  const unique = lastReveal?.uniqueUnlocked
+    ? ` Habilidad unica desbloqueada: ${uniqueAbilityForCard(card).name}.`
+    : "";
+  return `${base}${unique}${unlocks}`;
 }
 
 function renderLastCard() {
@@ -1383,9 +2537,14 @@ function renderLastCard() {
       rouletteFinal: isDone
     }));
     elements.lastCardTitle.textContent = isDone ? spinningCard.name : `Girando: ${spinningCard.name}`;
-    elements.lastCardText.textContent = isDone
-      ? `${spinningRarity.name}. La ruleta se detuvo.`
-      : `${spinningRarity.name}. Esta carta está pasando por la ruleta.`;
+    if (isDone) {
+      const entry = state.owned[spinningCard.id];
+      const xpProgress = cardXpProgress(entry);
+      const material = currentEnchantMaterial(entry);
+      elements.lastCardText.textContent = revealSummary(spinningCard, spinningRarity, entry, xpProgress, material);
+    } else {
+      elements.lastCardText.textContent = `${spinningRarity.name}. Esta carta esta pasando por la ruleta.`;
+    }
     return;
   }
 
@@ -1402,13 +2561,11 @@ function renderLastCard() {
   const card = cardById(state.lastCardId);
   const rarity = rarityById(card.rarity);
   const entry = state.owned[card.id];
-  const level = cardLevel(entry);
   const xpProgress = cardXpProgress(entry);
   const material = currentEnchantMaterial(entry);
   elements.lastCardSlot.appendChild(createCardElement(card, { big: true, reveal: true }));
   elements.lastCardTitle.textContent = card.name;
-  const xpText = xpProgress.isMax ? "XP maximo" : `${xpProgress.current}/${xpProgress.required} XP`;
-  elements.lastCardText.textContent = `${rarity.name}. Nivel ${level}/${MAX_CARD_LEVEL}, ${xpText}. ${material.name} x${formatMultiplier(material.multiplier)}. Produce ${formatNumber(cardIncome(card))} oro por segundo.`;
+  elements.lastCardText.textContent = revealSummary(card, rarity, entry, xpProgress, material);
 }
 
 function renderSelected() {
@@ -1429,6 +2586,9 @@ function renderSelected() {
   }
 
   const rarity = rarityById(selected.rarity);
+  const role = cardRole(selected);
+  const uniqueAbility = uniqueAbilityForCard(selected);
+  const uniqueUnlocked = cardUniqueUnlocked(selected.id);
   const currentMaterial = currentEnchantMaterial(owned);
   const currentLevel = enchantLevel(owned);
   const atMax = currentLevel >= enchantMaterials.length;
@@ -1443,6 +2603,9 @@ function renderSelected() {
 
   const details = [
     ["Rareza", rarity.name],
+    ["Rol", role.name],
+    ["Pasiva", role.passive],
+    ["Unica", uniqueUnlocked ? `${uniqueAbility.name}: ${uniqueAbility.description}` : `Bloqueada (${formatPercent(uniqueAbilityChance(selected), 1)} por tirada)`],
     ["Nivel", `${level}/${MAX_CARD_LEVEL}`],
     ["XP", xpProgress.isMax ? "Maximo" : `${xpProgress.current}/${xpProgress.required}`],
     ["Mineral", `${currentMaterial.name} x${formatMultiplier(currentMaterial.multiplier)}`],
@@ -1463,6 +2626,175 @@ function renderSelected() {
   elements.enchantButton.disabled = atMax || state.gold < cost;
 }
 
+function renderBattle() {
+  if (!elements.battleArena) {
+    return;
+  }
+
+  const battle = state.battle;
+  const selected = selectedBattleCard();
+
+  if (!battle) {
+    const stats = selected ? battleStatsForCard(selected) : null;
+    const role = selected ? cardRole(selected) : null;
+    elements.battleArena.innerHTML = `
+      <div class="battle-empty">
+        <strong>${selected ? selected.name : "Selecciona una carta"}</strong>
+        <span>${selected ? `${role.name} - ${stats.maxHp} vida - ${stats.attack} ataque` : "Elige una carta descubierta para pelear."}</span>
+      </div>
+      <button class="battle-start" type="button" ${selected ? "" : "disabled"}>Iniciar pelea</button>
+    `;
+    const startButton = elements.battleArena.querySelector(".battle-start");
+    startButton.addEventListener("click", startBattle);
+    return;
+  }
+
+  const card = cardById(battle.cardId);
+  if (!card) {
+    state.battle = null;
+    renderBattle();
+    return;
+  }
+
+  const role = cardRole(card);
+  const playerPercent = battle.playerMaxHp > 0 ? Math.max(0, Math.min(100, (battle.playerHp / battle.playerMaxHp) * 100)) : 0;
+  const enemyPercent = battle.enemyMaxHp > 0 ? Math.max(0, Math.min(100, (battle.enemyHp / battle.enemyMaxHp) * 100)) : 0;
+  const outcomeText = battle.outcome === "won"
+    ? "Victoria conseguida"
+    : battle.outcome === "lost"
+      ? "Derrota"
+      : "Tu turno";
+  const moves = movesForCard(card);
+  const rewardGold = Math.floor(Number(battle.rewardGold || 0) * (1 + Number(battle.bonusGold || 0)));
+  const rewardXp = Math.floor(Number(battle.rewardXp || 0) + Number(battle.bonusXp || 0));
+
+  elements.battleArena.innerHTML = `
+    <div class="battle-card" style="--role-color: ${role.color}">
+      <div class="battle-line">
+        <strong>${card.name}</strong>
+        <span>${role.short}</span>
+      </div>
+      <div class="battle-bar" aria-label="Vida de ${card.name}">
+        <span style="width: ${playerPercent}%"></span>
+        <em>${Math.ceil(battle.playerHp)}/${battle.playerMaxHp}</em>
+      </div>
+      <div class="battle-line">
+        <strong>${battle.enemyName}</strong>
+        <span>EN</span>
+      </div>
+      <div class="battle-bar enemy" aria-label="Vida del enemigo">
+        <span style="width: ${enemyPercent}%"></span>
+        <em>${Math.ceil(battle.enemyHp)}/${battle.enemyMaxHp}</em>
+      </div>
+      <div class="battle-reward">
+        <span>${outcomeText}</span>
+        <span>${money(rewardGold)} / +${rewardXp} XP</span>
+      </div>
+      <div class="battle-moves">
+        ${moves.map((move) => `
+          <button class="battle-move" type="button" data-move="${move.id}" ${battle.outcome ? "disabled" : ""}>
+            <strong>${move.name}</strong>
+            <span>${move.description}</span>
+          </button>
+        `).join("")}
+      </div>
+      <div class="battle-log">
+        ${(battle.log || []).slice(0, 4).map((line) => `<span>${line}</span>`).join("")}
+      </div>
+      <button class="battle-start" type="button">${battle.outcome ? "Nueva pelea" : "Rendirse"}</button>
+    </div>
+  `;
+
+  elements.battleArena.querySelectorAll(".battle-move").forEach((button) => {
+    button.addEventListener("click", () => useBattleMove(button.dataset.move));
+  });
+  elements.battleArena.querySelector(".battle-start").addEventListener("click", () => {
+    if (state.battle?.outcome) {
+      startBattle();
+    } else {
+      state.battle = null;
+      renderBattle();
+      saveState();
+    }
+  });
+}
+
+function renderExpeditions() {
+  if (!elements.expeditionList) {
+    return;
+  }
+
+  elements.expeditionList.innerHTML = "";
+  const levels = totalLevels();
+  const selectedCard = selectedExpeditionCard();
+
+  for (const expedition of expeditions) {
+    const role = roleById(expedition.role);
+    const active = state.expeditions[expedition.id];
+    const assignedCard = active?.cardId ? cardById(active.cardId) : selectedCard;
+    const power = assignedCard ? cardPower(assignedCard.id) : 0;
+    const remaining = expeditionRemaining(active);
+    const unlocked = levels >= expedition.unlockLevel;
+    const completed = Boolean(active && remaining <= 0);
+    const selectedBusy = Boolean(selectedCard && cardInExpedition(selectedCard.id));
+    const canStart = unlocked && !active && Boolean(selectedCard) && !selectedBusy;
+    const card = document.createElement("article");
+    card.className = `expedition-card ${unlocked ? "" : "locked"} ${active ? "active" : ""}`;
+    card.style.setProperty("--role-color", role.color);
+
+    const statusText = !unlocked
+      ? `Requiere ${expedition.unlockLevel} niveles`
+      : active
+        ? completed ? "Lista para reclamar" : `En marcha ${formatDuration(remaining)}`
+        : !selectedCard
+          ? "Selecciona una carta"
+          : selectedBusy
+            ? "Esa carta ya esta de expedicion"
+            : "Disponible";
+    const rewardGold = active ? active.rewardGold : expeditionRewardGold(expedition);
+    const rewardXp = active ? active.rewardXp : expeditionRewardXp(expedition);
+    const duration = active ? Math.ceil(active.duration / 1000) : expeditionDuration(expedition, selectedCard?.id);
+    const buttonText = !unlocked
+      ? "Bloqueada"
+      : active
+        ? completed ? "Reclamar" : formatDuration(remaining)
+        : selectedCard ? "Enviar carta" : "Sin carta";
+
+    card.innerHTML = `
+      <div class="expedition-topline">
+        <strong>${expedition.name}</strong>
+        <span class="role-pill">${role.short}</span>
+      </div>
+      <p>${unlocked ? expedition.description : `Sube cartas para desbloquearla. Tienes ${levels}/${expedition.unlockLevel} niveles.`}</p>
+      <div class="expedition-meta">
+        <span>${assignedCard ? assignedCard.name : "Sin carta"}</span>
+        <span>${formatDuration(duration * 1000)}</span>
+      </div>
+      <div class="expedition-meta">
+        <span>${money(rewardGold)}</span>
+        <span>+${rewardXp} XP carta</span>
+      </div>
+      <div class="expedition-meta">
+        <span>Poder ${formatNumber(power)}/${expedition.recommendedPower}</span>
+        <span>${role.name}</span>
+      </div>
+      <button class="expedition-action" type="button" ${active ? (completed ? "" : "disabled") : (canStart ? "" : "disabled")}>${buttonText}</button>
+      <span class="expedition-status">${statusText}</span>
+    `;
+
+    const button = card.querySelector(".expedition-action");
+    button.addEventListener("click", () => {
+      if (completed) {
+        claimExpedition(expedition.id);
+      } else {
+        startExpedition(expedition.id);
+      }
+    });
+
+    elements.expeditionList.appendChild(card);
+  }
+}
+
 function renderLog() {
   elements.pullLog.innerHTML = "";
 
@@ -1475,6 +2807,45 @@ function renderLog() {
   }
 
   for (const entry of state.log) {
+    if (entry.type === "battle") {
+      const card = cardById(entry.cardId);
+      if (!card) {
+        continue;
+      }
+
+      const role = cardRole(card);
+      const row = document.createElement("div");
+      row.className = "log-entry";
+      row.style.setProperty("--rarity-color", role.color);
+      row.innerHTML = `
+        <span class="log-dot" aria-hidden="true"></span>
+        <strong>${card.name}</strong>
+        <span>+${entry.rewardXp || 0} XP</span>
+      `;
+      elements.pullLog.appendChild(row);
+      continue;
+    }
+
+    if (entry.type === "expedition") {
+      const expedition = expeditionById(entry.expeditionId);
+      if (!expedition) {
+        continue;
+      }
+
+      const role = roleById(entry.role || expedition.role);
+      const assignedCard = entry.cardId ? cardById(entry.cardId) : null;
+      const row = document.createElement("div");
+      row.className = "log-entry";
+      row.style.setProperty("--rarity-color", role.color);
+      row.innerHTML = `
+        <span class="log-dot" aria-hidden="true"></span>
+        <strong>${assignedCard ? assignedCard.name : expedition.name}</strong>
+        <span>+${formatNumber(entry.rewardGold || 0)} oro</span>
+      `;
+      elements.pullLog.appendChild(row);
+      continue;
+    }
+
     const card = cardById(entry.cardId);
     const gacha = gachas.find((item) => item.id === entry.gachaId);
     if (!card || !gacha) {
@@ -1482,7 +2853,10 @@ function renderLog() {
     }
 
     const rarity = rarityById(card.rarity);
-    const levelText = entry.leveledUp === false
+    const uniqueVisible = entry.uniqueUnlocked && cardUniqueUnlocked(card.id);
+    const levelText = uniqueVisible
+      ? "Unica!"
+      : entry.leveledUp === false
       ? "+0 XP"
       : entry.leveledUp
         ? `Nv.${entry.level}`
@@ -1508,6 +2882,8 @@ function renderAll() {
   renderCollection();
   renderLastCard();
   renderSelected();
+  renderBattle();
+  renderExpeditions();
   renderLog();
 }
 
@@ -1525,6 +2901,7 @@ function tick() {
   renderStats();
   renderGachas();
   renderSelected();
+  renderExpeditions();
 
   if (saveTimer >= 2) {
     saveTimer = 0;
@@ -1538,6 +2915,30 @@ if (elements.soundButton) {
 }
 if (elements.musicButton) {
   elements.musicButton.addEventListener("click", toggleMusic);
+}
+if (elements.musicVolume) {
+  try { elements.musicVolume.value = String(Math.round(musicVolume * 100)); } catch (e) {}
+  elements.musicVolume.addEventListener('input', (ev) => {
+    const v = Number(ev.target.value) / 100;
+    setMusicVolume(v);
+  });
+}
+if (elements.playMusicButton) {
+  elements.playMusicButton.addEventListener('click', async () => {
+    musicEnabled = true;
+    localStorage.setItem(MUSIC_KEY, "on");
+    renderMusicButton();
+    const knownFiles = fileMusicList.length ? fileMusicList : DEFAULT_MUSIC_FILES;
+    let started = knownFiles.length ? await startMusicPlayback(knownFiles) : false;
+    if (!started) {
+      started = await startBackgroundMusic();
+    }
+    if (!started) {
+      startSynthMusic();
+    }
+    updatePlayMusicButton();
+  });
+  updatePlayMusicButton();
 }
 elements.resetButton.addEventListener("click", resetGame);
 

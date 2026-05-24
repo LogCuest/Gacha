@@ -17,6 +17,7 @@
   --legendary: #ce942f;
   --artifact: #138a91;
   --mythic: #ce3e72;
+  --special: #01926e;
     --glass: rgba(255,255,255,0.08);
   --blur: blur(14px);
 
@@ -24,6 +25,7 @@
   --glow-rare: 0 0 18px rgba(44,111,209,.45);
   --glow-legendary: 0 0 28px rgba(206,148,47,.55);
   --glow-mythic: 0 0 36px rgba(206,62,114,.65);
+  --glow-special: 0 0 36px rgba(44, 255, 237, 0.65);
 
   --transition-fast: 160ms cubic-bezier(.2,.8,.2,1);
   --transition-slow: 400ms cubic-bezier(.16,1,.3,1)
@@ -40,6 +42,11 @@
 .card-shell[data-rarity="mythic"] {
   box-shadow: var(--glow-mythic);
   animation: mythicPulse 2.8s ease-in-out infinite;
+}
+
+.card-shell[data-rarity="Special"] {
+  box-shadow: var(--glow-Special);
+  animation: specialPulse 2.8s ease-in-out infinite;
 }
 
 
@@ -117,7 +124,7 @@ button {
   transform: rotate(22deg) translateX(5px);
   background: #fce6e0;
 }
-
+ 
 h1,
 h2,
 h3,
@@ -227,6 +234,13 @@ h3 {
   opacity: 0.62;
 }
 
+.volume-slider {
+  width: 96px;
+  margin-left: 8px;
+  height: 28px;
+  background: transparent;
+}
+
 .game-layout {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(280px, 340px);
@@ -262,9 +276,7 @@ h3 {
   margin-bottom: 8px;
 }
 
-.shop-panel,
-.enchant-panel,
-.log-panel {
+.shop-panel {
   position: sticky;
   top: 18px;
 }
@@ -273,6 +285,17 @@ h3 {
 .side-column {
   display: grid;
   gap: 18px;
+}
+
+.side-column {
+  position: sticky;
+  top: 18px;
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 2px;
+  align-self: start;
 }
 
 .showcase {
@@ -620,6 +643,13 @@ h3 {
     0 18px 32px rgba(20, 23, 22, 0.16);
 }
 
+.card-shell.unique-card {
+  border-color: color-mix(in srgb, var(--role-color), var(--rarity-color) 42%);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--role-color), transparent 76%),
+    0 18px 32px rgba(20, 23, 22, 0.18);
+}
+
 .card-shell.enchanted-card .sigil {
   border-color: color-mix(in srgb, var(--mineral-color), #111 20%);
   box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--mineral-color), transparent 76%);
@@ -694,6 +724,41 @@ h3 {
   color: #fff;
   font-size: 0.78rem;
   font-weight: 900;
+}
+
+.role-short {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 28px;
+  border-radius: 7px;
+  padding: 0 7px;
+  background: color-mix(in srgb, var(--role-color), #fff 16%);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+
+.unique-star {
+  position: absolute;
+  top: 45px;
+  right: 12px;
+  z-index: 6;
+  display: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--role-color, var(--accent));
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.86);
+  font-size: 0.78rem;
+  font-weight: 950;
+  box-shadow: 0 8px 18px rgba(20, 23, 22, 0.2);
+}
+
+.card-shell.unique-card .unique-star {
+  display: grid;
 }
 
 .copy-count,
@@ -869,6 +934,7 @@ h3 {
 .detail-row strong {
   color: var(--ink);
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .primary-action {
@@ -883,6 +949,10 @@ h3 {
   box-shadow: 0 14px 22px rgba(215, 71, 47, 0.22);
 }
 
+.enchant-panel .primary-action {
+  margin-top: 4px;
+}
+
 .primary-action:hover:not(:disabled),
 .primary-action:focus-visible:not(:disabled) {
   background: var(--accent-dark);
@@ -893,6 +963,239 @@ h3 {
   cursor: not-allowed;
   opacity: 0.55;
   box-shadow: none;
+}
+
+.battle-arena {
+  display: grid;
+  gap: 10px;
+}
+
+.battle-empty,
+.battle-card {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.battle-empty {
+  color: var(--muted);
+}
+
+.battle-empty strong {
+  color: var(--ink);
+}
+
+.battle-empty span {
+  font-size: 0.86rem;
+}
+
+.battle-line,
+.battle-reward {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.battle-line strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.battle-line span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 26px;
+  border-radius: 7px;
+  padding: 0 7px;
+  background: var(--role-color);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+
+.battle-bar {
+  position: relative;
+  height: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(22, 22, 22, 0.12);
+  border-radius: 999px;
+  background: rgba(22, 22, 22, 0.07);
+}
+
+.battle-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--role-color, var(--accent)), #33b36b);
+}
+
+.battle-bar.enemy span {
+  background: linear-gradient(90deg, #d7472f, #ce942f);
+}
+
+.battle-bar em {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #151716;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.battle-reward {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.battle-reward span:last-child {
+  color: var(--ink);
+  text-align: right;
+}
+
+.battle-moves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.battle-move,
+.battle-start {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--role-color, var(--accent));
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.battle-move {
+  display: grid;
+  gap: 3px;
+  align-content: center;
+  padding: 8px;
+  text-align: left;
+}
+
+.battle-move span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.battle-move:disabled,
+.battle-start:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.battle-log {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.battle-log span {
+  overflow-wrap: anywhere;
+}
+
+.expedition-list {
+  display: grid;
+  gap: 10px;
+}
+
+.expedition-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--role-color), var(--line) 58%);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--role-color), transparent 88%), rgba(255, 255, 255, 0.96)),
+    #fff;
+}
+
+.expedition-card.locked {
+  filter: grayscale(0.5);
+  opacity: 0.62;
+}
+
+.expedition-card.active {
+  box-shadow: inset 3px 0 0 var(--role-color);
+}
+
+.expedition-topline,
+.expedition-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.expedition-topline strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.role-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 26px;
+  border-radius: 7px;
+  padding: 0 7px;
+  background: var(--role-color);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 950;
+}
+
+.expedition-card p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.expedition-meta {
+  color: #26302b;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.expedition-action {
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--role-color);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.expedition-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.expedition-status {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
 }
 
 .pull-log {
@@ -1087,9 +1390,11 @@ h3 {
   }
 
   .shop-panel,
-  .enchant-panel,
-  .log-panel {
+  .side-column {
     position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .side-column {

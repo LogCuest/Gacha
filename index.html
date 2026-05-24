@@ -43,6 +43,10 @@
         <button class="icon-button" id="musicButton" type="button" title="Activar musica" aria-label="Activar musica">
           <span aria-hidden="true">B</span>
         </button>
+        <input id="musicVolume" class="volume-slider" type="range" min="0" max="100" value="42" aria-label="Volumen de la musica" />
+        <button id="playMusicButton" class="icon-button" type="button" title="Tocar musica" aria-label="Tocar musica">
+          <span aria-hidden="true">&#9658;</span>
+        </button>
         <button class="icon-button" id="resetButton" type="button" title="Reiniciar partida" aria-label="Reiniciar partida">
           <span aria-hidden="true">R</span>
         </button>
@@ -94,6 +98,26 @@
           <div class="selected-card" id="selectedCardSlot"></div>
           <div class="detail-list" id="selectedDetails"></div>
           <button class="primary-action" id="enchantButton" type="button">Encantar</button>
+        </section>
+
+        <section class="panel battle-panel" aria-labelledby="battleTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h2 id="battleTitle">Combate</h2>
+              <p>Peleas por turnos con la carta seleccionada.</p>
+            </div>
+          </div>
+          <div class="battle-arena" id="battleArena"></div>
+        </section>
+
+        <section class="panel expedition-panel" aria-labelledby="expeditionTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h2 id="expeditionTitle">Expediciones</h2>
+              <p>Envia cualquier carta seleccionada.</p>
+            </div>
+          </div>
+          <div class="expedition-list" id="expeditionList"></div>
         </section>
 
         <section class="panel log-panel" aria-labelledby="logTitle">
