@@ -84,6 +84,19 @@
           </div>
           <div class="collection-grid" id="collectionGrid"></div>
         </section>
+
+        <section class="panel battle-panel independent-battle-panel" aria-labelledby="battleTitle">
+          <div class="panel-heading battle-heading">
+            <div>
+              <h2 id="battleTitle">Arena de combate</h2>
+              <p>Elige un modo y pelea contra otras cartas.</p>
+            </div>
+          </div>
+          <div class="battle-interface">
+            <div class="battle-mode-list" id="battleModeList"></div>
+            <div class="battle-arena" id="battleArena"></div>
+          </div>
+        </section>
       </section>
 
       <aside class="side-column">
@@ -98,16 +111,6 @@
           <div class="selected-card" id="selectedCardSlot"></div>
           <div class="detail-list" id="selectedDetails"></div>
           <button class="primary-action" id="enchantButton" type="button">Encantar</button>
-        </section>
-
-        <section class="panel battle-panel" aria-labelledby="battleTitle">
-          <div class="panel-heading compact-heading">
-            <div>
-              <h2 id="battleTitle">Combate</h2>
-              <p>Peleas por turnos con la carta seleccionada.</p>
-            </div>
-          </div>
-          <div class="battle-arena" id="battleArena"></div>
         </section>
 
         <section class="panel expedition-panel" aria-labelledby="expeditionTitle">
@@ -129,6 +132,8 @@
       </aside>
     </main>
   </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
   <script src="Js.js"></script>
 </body>

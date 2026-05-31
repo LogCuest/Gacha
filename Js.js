@@ -7,6 +7,7 @@ const DEFAULT_MUSIC_FILES = [
   "music/toucanmusic-las-vegas-407027.mp3"
 ];
 const MAX_CARD_LEVEL = 20;
+const MAX_ACTIVE_MOVES = 4;
 const XP_PER_CARD_PULL = 5;
 const BASE_CARD_XP_REQUIRED = 50;
 const CARD_XP_GROWTH = 1.3;
@@ -150,7 +151,7 @@ const cards = [
 
   // Specials
 { id: "tests-card", name: "Aguila Sensual", rarity: "special", income: 0, sigil: "EC" },
-
+{ id: "Cat", name: "Gato Astral", rarity: "special", income: 0, sigil: "GA" },
 
   // DOC 🧠
   {
@@ -239,6 +240,15 @@ const gachas = [
   }
 ];
 
+const pullBatchModes = [
+  { count: 1, label: "x1", rareChanceFactor: 1 },
+  { count: 10, label: "x10", rareChanceFactor: 0.5 },
+  { count: 50, label: "x50", rareChanceFactor: 0.25 },
+  { count: 100, label: "x100", rareChanceFactor: 0.1 }
+];
+
+const pullBatchPenalizedRarities = new Set(["rare", "veryRare", "legendary", "artifact", "mythic", "special"]);
+
 const enchantMaterials = [
   { id: "bronze", name: "Bronce", short: "BR", multiplier: 1, weight: 410, color: "#b06a3c" },
   { id: "iron", name: "Hierro", short: "HI", multiplier: 1.5, weight: 260, color: "#6d7880" },
@@ -322,24 +332,39 @@ const BASE_UNIQUE_CHANCE = 0.008;
 
 const roleMoves = {
   attack: [
-    { id: "heavy_strike", name: "Golpe feroz", description: "Mucho dano directo.", damage: 1.25 },
-    { id: "execute", name: "Remate", description: "Mas fuerte contra enemigos heridos.", damage: 0.9, execute: true }
+    { id: "heavy_strike", name: "Golpe feroz", description: "Mucho dano directo.", unlockLevel: 1, damage: 1.25 },
+    { id: "execute", name: "Remate", description: "Mas fuerte contra enemigos heridos.", unlockLevel: 1, damage: 0.9, execute: true },
+    { id: "bleeding_cut", name: "Corte sangrante", description: "Golpe fuerte y preciso.", unlockLevel: 4, damage: 1.05, goldBonus: 0.08 },
+    { id: "battle_roar", name: "Rugido de guerra", description: "Dano medio y XP extra.", unlockLevel: 8, damage: 0.88, xpBonus: 3 },
+    { id: "meteor_charge", name: "Carga meteoro", description: "Ataque brutal de alto dano.", unlockLevel: 13, damage: 1.55 }
   ],
   defense: [
-    { id: "harden", name: "Endurecer", description: "Gana escudo y recibe menos dano.", damage: 0.25, shield: 1.15 },
-    { id: "body_blow", name: "Golpe cuerpo", description: "Dano medio y algo de escudo.", damage: 0.82, shield: 0.35 }
+    { id: "harden", name: "Endurecer", description: "Gana escudo y recibe menos dano.", unlockLevel: 1, damage: 0.25, shield: 1.15 },
+    { id: "body_blow", name: "Golpe cuerpo", description: "Dano medio y algo de escudo.", unlockLevel: 1, damage: 0.82, shield: 0.35 },
+    { id: "shield_bash", name: "Escudazo", description: "Dano firme y mucho escudo.", unlockLevel: 4, damage: 0.62, shield: 0.78 },
+    { id: "iron_wall", name: "Muro de hierro", description: "Casi no dana, bloquea muchisimo.", unlockLevel: 8, damage: 0.18, shield: 1.65 },
+    { id: "counter_guard", name: "Guardia contraria", description: "Escudo alto con buen golpe.", unlockLevel: 13, damage: 0.95, shield: 0.7 }
   ],
   magic: [
-    { id: "arcane_bolt", name: "Rayo arcano", description: "Dano estable y preciso.", damage: 1.05 },
-    { id: "mystic_barrier", name: "Barrera mistica", description: "Escudo magico con contraataque.", damage: 0.62, shield: 0.7 }
+    { id: "arcane_bolt", name: "Rayo arcano", description: "Dano estable y preciso.", unlockLevel: 1, damage: 1.05 },
+    { id: "mystic_barrier", name: "Barrera mistica", description: "Escudo magico con contraataque.", unlockLevel: 1, damage: 0.62, shield: 0.7 },
+    { id: "mana_burst", name: "Estallido mana", description: "Dano alto de energia pura.", unlockLevel: 4, damage: 1.28 },
+    { id: "rune_prison", name: "Prision runica", description: "Dano y barrera estable.", unlockLevel: 8, damage: 0.78, shield: 0.95 },
+    { id: "starfall", name: "Lluvia estelar", description: "Hechizo enorme de mucho dano.", unlockLevel: 13, damage: 1.62 }
   ],
   support: [
-    { id: "inspire", name: "Inspirar", description: "Cura y prepara el siguiente golpe.", damage: 0.52, heal: 0.65 },
-    { id: "quick_hit", name: "Golpe rapido", description: "Dano agil y recompensa de XP.", damage: 0.86, xpBonus: 2 }
+    { id: "inspire", name: "Inspirar", description: "Cura y prepara el siguiente golpe.", unlockLevel: 1, damage: 0.52, heal: 0.65 },
+    { id: "quick_hit", name: "Golpe rapido", description: "Dano agil y recompensa de XP.", unlockLevel: 1, damage: 0.86, xpBonus: 2 },
+    { id: "healing_note", name: "Nota curativa", description: "Cura fuerte con dano bajo.", unlockLevel: 4, damage: 0.34, heal: 1.05 },
+    { id: "team_spark", name: "Chispa guia", description: "Dano y buena XP extra.", unlockLevel: 8, damage: 0.72, xpBonus: 5 },
+    { id: "heroic_pulse", name: "Pulso heroico", description: "Cura y golpea con fuerza.", unlockLevel: 13, damage: 1.02, heal: 0.72 }
   ],
   economy: [
-    { id: "coin_toss", name: "Monedazo", description: "Dano y oro extra si ganas.", damage: 0.78, goldBonus: 0.16 },
-    { id: "good_deal", name: "Trato astuto", description: "Escudo y oro extra si ganas.", damage: 0.48, shield: 0.55, goldBonus: 0.28 }
+    { id: "coin_toss", name: "Monedazo", description: "Dano y oro extra si ganas.", unlockLevel: 1, damage: 0.78, goldBonus: 0.16 },
+    { id: "good_deal", name: "Trato astuto", description: "Escudo y oro extra si ganas.", unlockLevel: 1, damage: 0.48, shield: 0.55, goldBonus: 0.28 },
+    { id: "gold_rush", name: "Fiebre de oro", description: "Dano con oro extra alto.", unlockLevel: 4, damage: 0.82, goldBonus: 0.32 },
+    { id: "safe_bet", name: "Apuesta segura", description: "Escudo y oro moderado.", unlockLevel: 8, damage: 0.54, shield: 0.85, goldBonus: 0.22 },
+    { id: "jackpot_hit", name: "Golpe jackpot", description: "Mucho dano y gran botin.", unlockLevel: 13, damage: 1.18, goldBonus: 0.42 }
   ]
 };
 
@@ -351,6 +376,69 @@ const battleEnemies = [
   "Duelista hueco",
   "Guarda de ruinas",
   "Eco del abismo"
+];
+
+const battleModes = [
+  {
+    id: "training",
+    name: "Entrenamiento",
+    short: "FACIL",
+    color: "#18845b",
+    unlockLevel: 0,
+    enemyRarities: ["common", "uncommon"],
+    enemyHpMultiplier: 0.72,
+    enemyAttackMultiplier: 0.68,
+    rewardMultiplier: 0.65,
+    description: "Riesgo bajo para probar cartas nuevas."
+  },
+  {
+    id: "duel",
+    name: "Duelo de cartas",
+    short: "NORMAL",
+    color: "#2c6fd1",
+    unlockLevel: 5,
+    enemyRarities: ["common", "uncommon", "rare"],
+    enemyHpMultiplier: 1,
+    enemyAttackMultiplier: 1,
+    rewardMultiplier: 1,
+    description: "Pelea pareja contra cartas del mazo."
+  },
+  {
+    id: "elite",
+    name: "Liga rara",
+    short: "DIFICIL",
+    color: "#7b4fca",
+    unlockLevel: 20,
+    enemyRarities: ["rare", "veryRare"],
+    enemyHpMultiplier: 1.45,
+    enemyAttackMultiplier: 1.28,
+    rewardMultiplier: 1.9,
+    description: "Enemigos fuertes y recompensas mejores."
+  },
+  {
+    id: "champions",
+    name: "Campeones",
+    short: "EXTREMO",
+    color: "#ce942f",
+    unlockLevel: 55,
+    enemyRarities: ["veryRare", "legendary", "artifact"],
+    enemyHpMultiplier: 2.15,
+    enemyAttackMultiplier: 1.78,
+    rewardMultiplier: 3.25,
+    description: "Cartas de alto rango con botin grande."
+  },
+  {
+    id: "mythic_gate",
+    name: "Puerta mitica",
+    short: "MITICO",
+    color: "#ce3e72",
+    unlockLevel: 110,
+    enemyRarities: ["legendary", "artifact", "mythic", "special"],
+    enemyHpMultiplier: 3.35,
+    enemyAttackMultiplier: 2.45,
+    rewardMultiplier: 5.5,
+    description: "Una pelea brutal por recompensas enormes."
+  }
 ];
 
 const expeditions = [
@@ -432,6 +520,7 @@ const initialState = {
   log: [],
   expeditions: {},
   battle: null,
+  selectedBattleMode: "training",
   filter: "all",
   lastSavedAt: Date.now()
 };
@@ -447,6 +536,7 @@ function createInitialState() {
     log: [],
     expeditions: {},
     battle: null,
+    selectedBattleMode: "training",
     filter: "all",
     lastSavedAt: Date.now()
   };
@@ -521,6 +611,7 @@ async function scanLocalImages() {
   renderCollection();
   renderLastCard();
   renderSelected();
+  renderBattle();
 }
 
 const elements = {
@@ -537,9 +628,11 @@ const elements = {
   selectedCardSlot: document.querySelector("#selectedCardSlot"),
   selectedDetails: document.querySelector("#selectedDetails"),
   enchantButton: document.querySelector("#enchantButton"),
+  battleModeList: document.querySelector("#battleModeList"),
   battleArena: document.querySelector("#battleArena"),
   pullLog: document.querySelector("#pullLog"),
   expeditionList: document.querySelector("#expeditionList"),
+  toastStack: document.querySelector("#toastStack"),
   soundButton: document.querySelector("#soundButton"),
   musicButton: document.querySelector("#musicButton"),
   musicVolume: document.querySelector("#musicVolume"),
@@ -575,6 +668,10 @@ function rarityById(id) {
   return rarities.find((rarity) => rarity.id === id);
 }
 
+function rarityRankById(rarityId) {
+  return Math.max(0, rarities.findIndex((rarity) => rarity.id === rarityId));
+}
+
 function cardById(id) {
   return cards.find((card) => card.id === id);
 }
@@ -602,6 +699,7 @@ function loadState() {
       lastReveal: saved.lastReveal || null,
       expeditions: saved.expeditions && typeof saved.expeditions === "object" ? saved.expeditions : {},
       battle: saved.battle && typeof saved.battle === "object" ? saved.battle : null,
+      selectedBattleMode: battleModeById(saved.selectedBattleMode)?.id || initialState.selectedBattleMode,
       log: Array.isArray(saved.log) ? saved.log.slice(0, 8) : []
     };
     normalizeOwnedCards(next.owned);
@@ -644,6 +742,66 @@ function formatNumber(value) {
 
 function money(value) {
   return `${formatNumber(Math.floor(value))} oro`;
+}
+
+function dismissToast(toast) {
+  if (!toast) {
+    return;
+  }
+
+  toast.classList.add("leaving");
+  window.setTimeout(() => toast.remove(), 260);
+}
+
+function showPullNotification(cardId, pullInfo = {}) {
+  if (!elements.toastStack) {
+    return;
+  }
+
+  const card = cardById(cardId);
+  if (!card) {
+    return;
+  }
+
+  const rarity = rarityById(card.rarity);
+  const role = cardRole(card);
+  const batchCount = Math.max(1, Number(pullInfo.batchCount || 1));
+  const copies = Math.max(1, Number(pullInfo.copies || 1));
+  const totalXpGain = Math.max(0, Math.floor(Number(pullInfo.totalXpGain ?? pullInfo.xpGain ?? 0)));
+  const uniqueCount = Math.max(0, Math.floor(Number(pullInfo.uniqueCount || 0)));
+  const title = batchCount > 1 ? `Mejor carta de ${batchCount} tiradas` : "Carta obtenida";
+  const details = [
+    `${rarity.name} - ${role.name}`,
+    copies > 1 ? `${copies} copias destacadas` : "+1 copia",
+    totalXpGain > 0 ? `+${totalXpGain} XP total` : "XP maximo"
+  ];
+
+  if (pullInfo.uniqueUnlocked || uniqueCount > 0) {
+    details.push(uniqueCount > 1 ? `${uniqueCount} unicas desbloqueadas` : "Unica desbloqueada");
+  }
+
+  const toast = document.createElement("article");
+  toast.className = "pull-toast";
+  toast.style.setProperty("--rarity-color", rarity.color);
+  toast.style.setProperty("--role-color", role.color);
+  toast.innerHTML = `
+    <div class="toast-sigil" aria-hidden="true">${card.sigil}</div>
+    <div class="toast-copy">
+      <span>${title}</span>
+      <strong>${card.name}</strong>
+      <p>${details.join(" - ")}</p>
+    </div>
+    <button class="toast-close" type="button" aria-label="Cerrar notificacion">x</button>
+  `;
+
+  toast.querySelector(".toast-close").addEventListener("click", () => dismissToast(toast));
+  elements.toastStack.prepend(toast);
+
+  while (elements.toastStack.children.length > 4) {
+    elements.toastStack.lastElementChild?.remove();
+  }
+
+  window.setTimeout(() => dismissToast(toast), batchCount > 1 ? 5600 : 4300);
 }
 
 function getAudioContext() {
@@ -1282,6 +1440,15 @@ function normalizeCardEntry(entry) {
   entry.copies = Math.max(0, Math.floor(Number(entry.copies || 0)));
   entry.enchant = Math.max(0, Math.floor(Number(entry.enchant || 0)));
   entry.uniqueUnlocked = entry.uniqueUnlocked === true;
+  entry.moves = Array.isArray(entry.moves)
+    ? Array.from(new Set(entry.moves.filter((moveId) => typeof moveId === "string"))).slice(0, MAX_ACTIVE_MOVES)
+    : [];
+  entry.pendingMoves = Array.isArray(entry.pendingMoves)
+    ? Array.from(new Set(entry.pendingMoves.filter((moveId) => typeof moveId === "string")))
+    : [];
+  entry.skippedMoves = Array.isArray(entry.skippedMoves)
+    ? Array.from(new Set(entry.skippedMoves.filter((moveId) => typeof moveId === "string")))
+    : [];
   return entry;
 }
 
@@ -1409,6 +1576,136 @@ function cardUniqueUnlocked(cardId, customState = state) {
 
 function uniqueAbilityForCard(card) {
   return uniqueAbilitiesByRole[cardRole(card).id] || uniqueAbilitiesByRole.attack;
+}
+
+function allMovesForCard(card) {
+  return roleMoves[cardRole(card).id] || roleMoves.attack;
+}
+
+function moveById(card, moveId) {
+  return allMovesForCard(card).find((move) => move.id === moveId) || null;
+}
+
+function defaultMoveIdsForCard(card) {
+  return allMovesForCard(card)
+    .filter((move) => Number(move.unlockLevel || 1) <= 1)
+    .slice(0, MAX_ACTIVE_MOVES)
+    .map((move) => move.id);
+}
+
+function learnedMoveIdsForLevel(card, level) {
+  return allMovesForCard(card)
+    .filter((move) => Number(move.unlockLevel || 1) <= level)
+    .map((move) => move.id);
+}
+
+function syncLearnedMoves(cardId, customState = state, options = {}) {
+  const card = cardById(cardId);
+  const entry = card ? customState.owned[card.id] : null;
+  if (!card || !entry) {
+    return [];
+  }
+
+  normalizeCardEntry(entry);
+
+  const level = cardLevel(entry);
+  if (level <= 0) {
+    entry.moves = [];
+    entry.pendingMoves = [];
+    return [];
+  }
+
+  const validMoveIds = allMovesForCard(card).map((move) => move.id);
+  const validMoveSet = new Set(validMoveIds);
+  entry.moves = entry.moves.filter((moveId) => validMoveSet.has(moveId));
+  entry.pendingMoves = entry.pendingMoves.filter((moveId) => validMoveSet.has(moveId) && !entry.moves.includes(moveId));
+  entry.skippedMoves = entry.skippedMoves.filter((moveId) => validMoveSet.has(moveId));
+
+  if (entry.moves.length === 0) {
+    entry.moves = defaultMoveIdsForCard(card);
+  }
+
+  const allowPending = options.allowPending !== false;
+  const learnedNow = [];
+
+  for (const moveId of learnedMoveIdsForLevel(card, level)) {
+    if (entry.moves.includes(moveId) || entry.pendingMoves.includes(moveId) || entry.skippedMoves.includes(moveId)) {
+      continue;
+    }
+
+    if (entry.moves.length < MAX_ACTIVE_MOVES) {
+      entry.moves.push(moveId);
+      learnedNow.push(moveId);
+    } else if (allowPending) {
+      entry.pendingMoves.push(moveId);
+      learnedNow.push(moveId);
+    }
+  }
+
+  entry.moves = entry.moves.slice(0, MAX_ACTIVE_MOVES);
+  entry.pendingMoves = Array.from(new Set(entry.pendingMoves));
+  return learnedNow;
+}
+
+function knownMoveIdsForCard(card, customState = state) {
+  const entry = customState.owned[card.id];
+  if (!entry || cardLevel(entry) <= 0) {
+    return defaultMoveIdsForCard(card);
+  }
+
+  syncLearnedMoves(card.id, customState);
+  return entry.moves.length ? entry.moves : defaultMoveIdsForCard(card);
+}
+
+function pendingMoveForCard(card) {
+  const entry = state.owned[card.id];
+  if (!entry) {
+    return null;
+  }
+
+  syncLearnedMoves(card.id);
+  const moveId = entry.pendingMoves[0];
+  return moveId ? moveById(card, moveId) : null;
+}
+
+function replaceMove(cardId, oldMoveId, newMoveId) {
+  const card = cardById(cardId);
+  const entry = card ? ownedEntry(card.id) : null;
+  if (!card || !entry || !moveById(card, oldMoveId) || !moveById(card, newMoveId)) {
+    return;
+  }
+
+  syncLearnedMoves(card.id);
+  const oldIndex = entry.moves.indexOf(oldMoveId);
+  if (oldIndex === -1 || !entry.pendingMoves.includes(newMoveId)) {
+    return;
+  }
+
+  entry.moves[oldIndex] = newMoveId;
+  entry.pendingMoves = entry.pendingMoves.filter((moveId) => moveId !== newMoveId);
+  entry.skippedMoves = entry.skippedMoves.filter((moveId) => moveId !== newMoveId);
+  normalizeCardEntry(entry);
+  playSound("ui");
+  renderAll();
+  saveState();
+}
+
+function skipPendingMove(cardId, moveId) {
+  const card = cardById(cardId);
+  const entry = card ? ownedEntry(card.id) : null;
+  if (!card || !entry) {
+    return;
+  }
+
+  entry.pendingMoves = entry.pendingMoves.filter((pendingMoveId) => pendingMoveId !== moveId);
+  if (!entry.skippedMoves.includes(moveId)) {
+    entry.skippedMoves.push(moveId);
+  }
+  normalizeCardEntry(entry);
+  playSound("ui");
+  renderSelected();
+  renderBattle();
+  saveState();
 }
 
 function roleScores(customState = state) {
@@ -1593,7 +1890,9 @@ function expeditionRemaining(expeditionState) {
 }
 
 function movesForCard(card) {
-  return roleMoves[cardRole(card).id] || roleMoves.attack;
+  return knownMoveIdsForCard(card)
+    .map((moveId) => moveById(card, moveId))
+    .filter(Boolean);
 }
 
 function battleStatsForCard(card) {
@@ -1691,142 +1990,99 @@ function battleStatsForCard(card) {
   };
 }
 
-function battleDifficulty(card) {
-  const entry = state.owned[card.id];
-  return Math.max(1, cardLevel(entry) + Math.floor(totalLevels() / 18));
+function battleModeById(modeId) {
+  return battleModes.find((mode) => mode.id === modeId) || battleModes[0];
 }
 
-function createBattle(card) {
+function selectedBattleMode() {
+  return battleModeById(state.selectedBattleMode);
+}
+
+function battleModeUnlocked(mode) {
+  return totalLevels() >= mode.unlockLevel;
+}
+
+function enemyCardsForMode(mode, playerCard) {
+  const pool = cards.filter((card) => (
+    card.id !== playerCard.id
+      && mode.enemyRarities.includes(card.rarity)
+  ));
+  return pool.length ? pool : cards.filter((card) => card.id !== playerCard.id);
+}
+
+function randomEnemyCardForMode(mode, playerCard) {
+  const pool = enemyCardsForMode(mode, playerCard);
+  return pool[Math.floor(Math.random() * pool.length)] || playerCard;
+}
+
+function battleEnemyStatsForCard(enemyCard, playerCard, mode) {
+  const playerLevel = Math.max(1, cardLevel(ownedEntry(playerCard.id)));
+  const playerTotalLevels = Math.max(1, totalLevels());
+  const enemyRank = rarityRankById(enemyCard.rarity);
+  const enemyRole = cardRole(enemyCard);
+
+  let hp = 58 + playerLevel * 18 + Math.sqrt(playerTotalLevels) * 26 + enemyRank * 34;
+  let attack = 7 + playerLevel * 4.3 + Math.sqrt(playerTotalLevels) * 2.8 + enemyRank * 5.5;
+
+  switch (enemyRole.id) {
+    case "defense":
+      hp *= 1.24;
+      attack *= 0.92;
+      break;
+    case "attack":
+      hp *= 0.94;
+      attack *= 1.2;
+      break;
+    case "magic":
+      attack *= 1.12;
+      break;
+    case "support":
+      hp *= 1.1;
+      break;
+    case "economy":
+      hp *= 0.94;
+      attack *= 0.94;
+      break;
+  }
+
+  hp *= mode.enemyHpMultiplier * (0.92 + Math.random() * 0.16);
+  attack *= mode.enemyAttackMultiplier * (0.92 + Math.random() * 0.16);
+
+  return {
+    maxHp: Math.max(12, Math.floor(hp)),
+    attack: Math.max(2, Math.floor(attack))
+  };
+}
+
+function createBattle(card, modeId = state.selectedBattleMode) {
+  const mode = battleModeById(modeId);
   const stats = battleStatsForCard(card);
-
   const level = cardLevel(ownedEntry(card.id));
-  const playerTotalLevels = totalLevels();
-
-  // =========================
-  // BASE
-  // =========================
-
-  let enemyHp =
-    55 +
-    (level * 20) +
-    (Math.log10(playerTotalLevels + 1) * 120)
-
-  let enemyAttack =
-    7 +
-    (level * 4.5) +
-    (playerTotalLevels * 0.7);
-
-  // =========================
-  // CHANCES SEGUN PROGRESO
-  // =========================
-
-  let easyChance = 0.35;
-  let normalChance = 0.65;
-  let hardChance = 0;
-  let impossibleChance = 0;
-
-  // Difficult desbloqueado
-  if (playerTotalLevels >= 25) {
-    hardChance = 0.12;
-    normalChance -= hardChance;
-  }
-
-  // Impossible desbloqueado
-  if (playerTotalLevels >= 60) {
-    impossibleChance = 0.03;
-    normalChance -= impossibleChance;
-  }
-
-  // =========================
-  // ROLL
-  // =========================
-
-  const roll = Math.random();
-
-  let multiplierHp = 1;
-  let multiplierAttack = 1;
-  let rewardMultiplier = 1;
-
-  if (roll <= easyChance) {
-
-    // FACIL
-    multiplierHp = 0.75;
-    multiplierAttack = 0.7;
-    rewardMultiplier = 0.85;
-
-  } else if (
-    roll <= easyChance + normalChance
-  ) {
-
-    // NORMAL
-    multiplierHp = 1;
-    multiplierAttack = 1;
-
-  } else if (
-    roll <= easyChance + normalChance + hardChance
-  ) {
-
-    // DIFICIL
-    multiplierHp = 1.8;
-    multiplierAttack = 1.45;
-    rewardMultiplier = 2;
-
-  } else {
-
-    // IMPOSIBLE
-    multiplierHp = 4;
-    multiplierAttack = 2.6;
-    rewardMultiplier = 5;
-  }
-
-  // =========================
-  // RANDOM EXTRA
-  // =========================
-
-  enemyHp *= multiplierHp;
-  enemyAttack *= multiplierAttack;
-
-  enemyHp *= 0.9 + Math.random() * 0.2;
-  enemyAttack *= 0.9 + Math.random() * 0.2;
-
-  enemyHp = Math.floor(enemyHp);
-  enemyAttack = Math.floor(enemyAttack);
+  const power = cardPower(card.id);
+  const enemyCard = randomEnemyCardForMode(mode, card);
+  const enemyStats = battleEnemyStatsForCard(enemyCard, card, mode);
+  const enemyRank = rarityRankById(enemyCard.rarity);
+  const rewardBase = 42 + level * 14 + power * 7 + enemyRank * 24;
 
   return {
     cardId: card.id,
-
-    enemyName:
-      battleEnemies[
-        Math.floor(Math.random() * battleEnemies.length)
-      ],
-
-    enemyHp,
-    enemyMaxHp: enemyHp,
-
-    enemyAttack,
-
+    modeId: mode.id,
+    enemyCardId: enemyCard.id,
+    enemyName: enemyCard.name || battleEnemies[Math.floor(Math.random() * battleEnemies.length)],
+    enemyHp: enemyStats.maxHp,
+    enemyMaxHp: enemyStats.maxHp,
+    enemyAttack: enemyStats.attack,
     playerHp: stats.maxHp,
     playerMaxHp: stats.maxHp,
-
     playerAttack: stats.attack,
-
     shield: 0,
-
-    rewardGold: Math.floor(
-      (40 + level * 12) * rewardMultiplier
-    ),
-
-    rewardXp: Math.floor(
-      (5 + level * 2) * rewardMultiplier
-    ),
-
+    rewardGold: Math.floor(rewardBase * mode.rewardMultiplier),
+    rewardXp: Math.floor((5 + level * 2 + enemyRank) * mode.rewardMultiplier),
     bonusGold: 0,
     bonusXp: 0,
-
     outcome: null,
-
     log: [
-      "La pelea empieza."
+      `${mode.name}: ${enemyCard.name} entra a la arena.`
     ]
   };
 }
@@ -1843,10 +2099,15 @@ function startBattle() {
     return;
   }
 
+  const mode = selectedBattleMode();
+  if (!battleModeUnlocked(mode)) {
+    return;
+  }
+
   unlockAudio();
   playSound("ui");
-  state.battle = createBattle(card);
-  renderBattle();
+  state.battle = createBattle(card, mode.id);
+  renderAll();
   saveState();
 }
 
@@ -1865,11 +2126,17 @@ function finishBattle(won) {
     const entry = ownedEntry(card.id);
     entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
     normalizeCardEntry(entry);
+    const learnedMoves = syncLearnedMoves(card.id);
     state.gold += rewardGold;
     battle.log.unshift(`Victoria: +${formatNumber(rewardGold)} oro, +${rewardXp} XP.`);
+    if (learnedMoves.length) {
+      const learnedNames = learnedMoves.map((moveId) => moveById(card, moveId)?.name).filter(Boolean).join(", ");
+      battle.log.unshift(`${card.name} aprendio ${learnedNames}.`);
+    }
     state.log.unshift({
       type: "battle",
       cardId: card.id,
+      modeId: battle.modeId || "training",
       rewardGold,
       rewardXp,
       time: Date.now()
@@ -1987,6 +2254,7 @@ function claimExpedition(expeditionId) {
     const entry = ownedEntry(assignedCard.id);
     entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
     normalizeCardEntry(entry);
+    syncLearnedMoves(assignedCard.id);
   } else {
     for (const card of cards) {
       if (cardRole(card).id !== expedition.role) {
@@ -2000,6 +2268,7 @@ function claimExpedition(expeditionId) {
 
       entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
       normalizeCardEntry(entry);
+      syncLearnedMoves(card.id);
     }
   }
 
@@ -2019,13 +2288,29 @@ function claimExpedition(expeditionId) {
   saveState();
 }
 
-function gachaCost(gacha) {
-  return gacha.baseCost;
+function pullBatchModeByCount(count) {
+  return pullBatchModes.find((mode) => mode.count === Number(count)) || pullBatchModes[0];
 }
 
-function rarityChance(gacha, rarityId) {
-  const total = Object.values(gacha.weights).reduce((sum, value) => sum + value, 0);
-  return total === 0 ? 0 : (gacha.weights[rarityId] || 0) / total;
+function adjustedWeightsForBatch(weights, count = 1) {
+  const mode = pullBatchModeByCount(count);
+  return rarities.reduce((nextWeights, rarity) => {
+    const value = Math.max(0, Number(weights[rarity.id] || 0));
+    nextWeights[rarity.id] = pullBatchPenalizedRarities.has(rarity.id)
+      ? value * mode.rareChanceFactor
+      : value;
+    return nextWeights;
+  }, {});
+}
+
+function gachaCost(gacha, count = 1) {
+  return gacha.baseCost * pullBatchModeByCount(count).count;
+}
+
+function rarityChance(gacha, rarityId, count = 1) {
+  const weights = adjustedWeightsForBatch(gacha.weights, count);
+  const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
+  return total === 0 ? 0 : (weights[rarityId] || 0) / total;
 }
 
 function weightedRarity(weights) {
@@ -2044,7 +2329,21 @@ function weightedRarity(weights) {
 
 function randomCardFromRarity(rarityId) {
   const pool = cards.filter((card) => card.rarity === rarityId);
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[Math.floor(Math.random() * pool.length)] || cards[0];
+}
+
+function cloneOwnedEntries(owned) {
+  return Object.fromEntries(
+    Object.entries(owned || {}).map(([cardId, entry]) => [cardId, normalizeCardEntry({ ...entry })])
+  );
+}
+
+function draftOwnedEntry(draftState, cardId) {
+  if (!draftState.owned[cardId]) {
+    draftState.owned[cardId] = { copies: 0, xp: 0, enchant: 0, uniqueUnlocked: false };
+  }
+  normalizeCardEntry(draftState.owned[cardId]);
+  return draftState.owned[cardId];
 }
 
 function clearCardRoulette() {
@@ -2059,26 +2358,63 @@ function applyPendingPull(finalCardId, pending) {
     return;
   }
 
-  const previousTotalLevels = totalLevels();
-  const entry = ownedEntry(finalCardId);
-  entry.copies += pending.copies;
-  entry.xp = Math.min(cardXp(entry) + pending.xpGain, maxCardXp());
-  if (pending.uniqueUnlocked) {
-    entry.uniqueUnlocked = true;
-  }
-  normalizeCardEntry(entry);
+  let unlockedExpeditions = Array.isArray(pending.unlockedExpeditions) ? pending.unlockedExpeditions : [];
 
-  const nextTotalLevels = totalLevels();
-  const unlockedExpeditions = expeditions
-    .filter((expedition) => previousTotalLevels < expedition.unlockLevel && nextTotalLevels >= expedition.unlockLevel)
-    .map((expedition) => expedition.id);
+  if (!pending.applied) {
+    const previousTotalLevels = totalLevels();
+
+    if (Array.isArray(pending.results) && pending.results.length) {
+      for (const result of pending.results) {
+        const entry = ownedEntry(result.cardId);
+        entry.copies += 1;
+        entry.xp = Math.min(cardXp(entry) + Number(result.gainedXp || 0), maxCardXp());
+        if (result.uniqueUnlocked) {
+          entry.uniqueUnlocked = true;
+        }
+        normalizeCardEntry(entry);
+        syncLearnedMoves(result.cardId);
+      }
+    } else {
+      const entry = ownedEntry(finalCardId);
+      entry.copies += pending.copies;
+      entry.xp = Math.min(cardXp(entry) + pending.xpGain, maxCardXp());
+      if (pending.uniqueUnlocked) {
+        entry.uniqueUnlocked = true;
+      }
+      normalizeCardEntry(entry);
+      syncLearnedMoves(finalCardId);
+    }
+
+    const nextTotalLevels = totalLevels();
+    unlockedExpeditions = expeditions
+      .filter((expedition) => previousTotalLevels < expedition.unlockLevel && nextTotalLevels >= expedition.unlockLevel)
+      .map((expedition) => expedition.id);
+
+    if (Array.isArray(pending.results) && pending.results.length) {
+      for (const result of pending.results) {
+        state.log.unshift(result);
+      }
+      state.log = state.log.slice(0, 8);
+    }
+
+    state.selectedCardId = finalCardId;
+    pending.applied = true;
+  } else if (state.owned[finalCardId]) {
+    normalizeCardEntry(state.owned[finalCardId]);
+  }
 
   state.lastReveal = {
     cardId: finalCardId,
     uniqueUnlocked: Boolean(pending.uniqueUnlocked),
     unlockedExpeditions,
+    batchCount: Math.max(1, Number(pending.batchCount || 1)),
     time: Date.now()
   };
+
+  if (!pending.notified) {
+    showPullNotification(finalCardId, { ...pending, unlockedExpeditions });
+    pending.notified = true;
+  }
 }
 
 function completeCardRouletteImmediately() {
@@ -2174,7 +2510,77 @@ function enchantCost(cardId) {
   return Math.max(1, Math.floor(rarity.baseEnchant * (1 - passiveModifiers().enchantDiscount)));
 }
 
-function pullGacha(gachaId) {
+function resolveGachaPull(gacha, weights, time, draftState = state) {
+  const rarityId = weightedRarity(weights);
+  const card = randomCardFromRarity(rarityId);
+  const currentEntry = draftState === state ? ownedEntry(card.id) : draftOwnedEntry(draftState, card.id);
+  const previousLevel = cardLevel(currentEntry);
+  const previousXp = cardXp(currentEntry);
+  const pullXp = xpGainPerPull(draftState);
+  const nextXp = previousLevel >= MAX_CARD_LEVEL ? previousXp : Math.min(previousXp + pullXp, maxCardXp());
+  const xpGain = nextXp - previousXp;
+  const nextLevel = cardLevel({ ...currentEntry, xp: nextXp });
+  const uniqueUnlocked = !currentEntry.uniqueUnlocked && Math.random() < uniqueAbilityChance(card, draftState);
+
+  currentEntry.copies += 1;
+  currentEntry.xp = nextXp;
+  if (uniqueUnlocked) {
+    currentEntry.uniqueUnlocked = true;
+  }
+  normalizeCardEntry(currentEntry);
+  syncLearnedMoves(card.id, draftState, { allowPending: false });
+
+  const progress = cardXpProgress(currentEntry);
+  return {
+    cardId: card.id,
+    gachaId: gacha.id,
+    rarityId,
+    level: nextLevel,
+    leveledUp: nextLevel > previousLevel,
+    gainedXp: xpGain,
+    uniqueUnlocked,
+    xpCurrent: progress.current,
+    xpRequired: progress.required,
+    time
+  };
+}
+
+function chooseFeaturedPullResult(results) {
+  return results.reduce((best, result) => {
+    const rank = rarityRankById(result.rarityId);
+    const bestRank = rarityRankById(best.rarityId);
+
+    if (rank !== bestRank) {
+      return rank > bestRank ? result : best;
+    }
+
+    if (result.uniqueUnlocked !== best.uniqueUnlocked) {
+      return result.uniqueUnlocked ? result : best;
+    }
+
+    if (result.leveledUp !== best.leveledUp) {
+      return result.leveledUp ? result : best;
+    }
+
+    return result;
+  }, results[0]);
+}
+
+function buildFeaturedPullInfo(results, featured, mode) {
+  const featuredResults = results.filter((result) => result.cardId === featured.cardId);
+  return {
+    applied: false,
+    results,
+    copies: featuredResults.length,
+    xpGain: featuredResults.reduce((sum, result) => sum + Number(result.gainedXp || 0), 0),
+    totalXpGain: results.reduce((sum, result) => sum + Number(result.gainedXp || 0), 0),
+    uniqueUnlocked: featuredResults.some((result) => result.uniqueUnlocked),
+    uniqueCount: results.filter((result) => result.uniqueUnlocked).length,
+    batchCount: mode.count
+  };
+}
+
+function pullGacha(gachaId, count = 1) {
   if (cardRoulette && !cardRoulette.finished) {
     completeCardRouletteImmediately();
   }
@@ -2184,7 +2590,8 @@ function pullGacha(gachaId) {
     return;
   }
 
-  const cost = gachaCost(gacha);
+  const mode = pullBatchModeByCount(count);
+  const cost = gachaCost(gacha, mode.count);
   if (state.gold < cost) {
     return;
   }
@@ -2193,42 +2600,31 @@ function pullGacha(gachaId) {
   playSound("buy");
 
   state.gold -= cost;
-  state.pulls[gacha.id] = (state.pulls[gacha.id] || 0) + 1;
+  state.pulls[gacha.id] = (state.pulls[gacha.id] || 0) + mode.count;
 
-  const rarityId = weightedRarity(gacha.weights);
-  const card = randomCardFromRarity(rarityId);
-  const rarityRank = rarities.findIndex((rarity) => rarity.id === rarityId);
-  const currentEntry = state.owned[card.id];
-  const previousLevel = cardLevel(currentEntry);
-  const previousXp = cardXp(currentEntry);
-  const pullXp = xpGainPerPull();
-  const nextXp = previousLevel >= MAX_CARD_LEVEL ? previousXp : Math.min(previousXp + pullXp, maxCardXp());
-  const xpGain = nextXp - previousXp;
-  const nextLevel = cardLevel({ ...currentEntry, xp: nextXp });
-  const progress = cardXpProgress({ ...currentEntry, xp: nextXp });
-  const uniqueUnlocked = rollUniqueAbility(card, currentEntry);
+  const weights = adjustedWeightsForBatch(gacha.weights, mode.count);
+  const time = Date.now();
+  const draftState = {
+    ...state,
+    owned: cloneOwnedEntries(state.owned)
+  };
+  const results = [];
 
-  state.selectedCardId = card.id;
-  state.log.unshift({
-    cardId: card.id,
-    gachaId: gacha.id,
-    level: nextLevel,
-    leveledUp: nextLevel > previousLevel,
-    gainedXp: xpGain,
-    uniqueUnlocked,
-    xpCurrent: progress.current,
-    xpRequired: progress.required,
-    time: Date.now()
-  });
-  state.log = state.log.slice(0, 8);
-  startCardRoulette(card.id, { copies: 1, xpGain, uniqueUnlocked });
+  for (let index = 0; index < mode.count; index += 1) {
+    results.push(resolveGachaPull(gacha, weights, time + index, draftState));
+  }
 
-  if (rarityRank >= 4) {
-    playSound("rarePull", { rarityId, delay: 0.18 });
-  } else if (nextLevel > previousLevel) {
-    playSound("levelUp", { rarityId, delay: 0.16 });
+  const featured = chooseFeaturedPullResult(results);
+
+  startCardRoulette(featured.cardId, buildFeaturedPullInfo(results, featured, mode));
+
+  const featuredRarityRank = rarityRankById(featured.rarityId);
+  if (featuredRarityRank >= 4) {
+    playSound("rarePull", { rarityId: featured.rarityId, delay: 0.18 });
+  } else if (results.some((result) => result.leveledUp)) {
+    playSound("levelUp", { rarityId: featured.rarityId, delay: 0.16 });
   } else {
-    playSound("pull", { rarityId, delay: 0.12 });
+    playSound("pull", { rarityId: featured.rarityId, delay: 0.12 });
   }
 
   renderAll();
@@ -2423,12 +2819,9 @@ function renderGachas() {
 
   for (const gacha of gachas) {
     const cost = gachaCost(gacha);
-    const button = document.createElement("button");
-    button.className = "gacha-button";
-    button.type = "button";
-    button.disabled = state.gold < cost;
-    button.style.setProperty("--gacha-color", gacha.color);
-    button.addEventListener("click", () => pullGacha(gacha.id));
+    const card = document.createElement("article");
+    card.className = "gacha-card";
+    card.style.setProperty("--gacha-color", gacha.color);
 
     const odds = rarities
       .map((rarity) => {
@@ -2441,7 +2834,22 @@ function renderGachas() {
       })
       .join("");
 
-    button.innerHTML = `
+    const actions = pullBatchModes
+      .map((mode) => {
+        const modeCost = gachaCost(gacha, mode.count);
+        const disabled = state.gold < modeCost ? "disabled" : "";
+        const penalty = mode.count > 1 ? `<em>R+ ${Math.round(mode.rareChanceFactor * 100)}%</em>` : `<em>Normal</em>`;
+        return `
+          <button class="gacha-pull ${mode.count === 1 ? "primary" : ""}" type="button" data-count="${mode.count}" ${disabled}>
+            <strong>${mode.label}</strong>
+            <span>${money(modeCost)}</span>
+            ${penalty}
+          </button>
+        `;
+      })
+      .join("");
+
+    card.innerHTML = `
       <div class="gacha-main">
         <div class="gacha-title">
           <span class="gacha-icon" aria-hidden="true">${gacha.icon}</span>
@@ -2450,9 +2858,14 @@ function renderGachas() {
         <span class="gacha-cost">${money(cost)}</span>
       </div>
       <div class="odds">${odds}</div>
+      <div class="gacha-actions">${actions}</div>
     `;
 
-    elements.gachaList.appendChild(button);
+    card.querySelectorAll(".gacha-pull").forEach((button) => {
+      button.addEventListener("click", () => pullGacha(gacha.id, Number(button.dataset.count || 1)));
+    });
+
+    elements.gachaList.appendChild(card);
   }
 }
 
@@ -2512,10 +2925,11 @@ function revealSummary(card, rarity, entry, xpProgress, material) {
   const unlocks = lastReveal?.unlockedExpeditions?.length
     ? ` Expedicion desbloqueada: ${lastReveal.unlockedExpeditions.map((id) => expeditionById(id)?.name).filter(Boolean).join(", ")}.`
     : "";
+  const batch = lastReveal?.batchCount > 1 ? ` Resultado destacado de x${lastReveal.batchCount}.` : "";
   const unique = lastReveal?.uniqueUnlocked
     ? ` Habilidad unica desbloqueada: ${uniqueAbilityForCard(card).name}.`
     : "";
-  return `${base}${unique}${unlocks}`;
+  return `${base}${batch}${unique}${unlocks}`;
 }
 
 function renderLastCard() {
@@ -2622,8 +3036,94 @@ function renderSelected() {
     elements.selectedDetails.appendChild(row);
   }
 
+  const activeMoves = movesForCard(selected);
+  const pendingMove = pendingMoveForCard(selected);
+  const movePanel = document.createElement("div");
+  movePanel.className = `move-learn-panel ${pendingMove ? "has-pending" : ""}`;
+  movePanel.innerHTML = `
+    <div class="move-learn-heading">
+      <strong>Ataques</strong>
+      <span>${activeMoves.length}/${MAX_ACTIVE_MOVES}</span>
+    </div>
+    <div class="known-move-list">
+      ${activeMoves.map((move) => `
+        <div class="known-move">
+          <strong>${move.name}</strong>
+          <span>Nv.${move.unlockLevel || 1} - ${move.description}</span>
+        </div>
+      `).join("")}
+    </div>
+    ${pendingMove ? `
+      <div class="pending-move">
+        <span>Quiere aprender</span>
+        <strong>${pendingMove.name}</strong>
+        <p>Nv.${pendingMove.unlockLevel || level}. ${pendingMove.description}</p>
+        <div class="replace-move-list">
+          ${activeMoves.map((move) => `
+            <button class="replace-move-button" type="button" data-old-move="${move.id}" data-new-move="${pendingMove.id}">
+              Reemplazar ${move.name}
+            </button>
+          `).join("")}
+          <button class="skip-move-button" type="button" data-new-move="${pendingMove.id}">No aprender</button>
+        </div>
+      </div>
+    ` : ""}
+  `;
+  elements.selectedDetails.appendChild(movePanel);
+
+  movePanel.querySelectorAll(".replace-move-button").forEach((button) => {
+    button.addEventListener("click", () => replaceMove(selected.id, button.dataset.oldMove, button.dataset.newMove));
+  });
+  movePanel.querySelector(".skip-move-button")?.addEventListener("click", (event) => {
+    skipPendingMove(selected.id, event.currentTarget.dataset.newMove);
+  });
+
   elements.enchantButton.textContent = atMax ? "Diamante alcanzado" : `Encantar aleatorio (${money(cost)})`;
   elements.enchantButton.disabled = atMax || state.gold < cost;
+}
+
+function renderBattleModes() {
+  if (!elements.battleModeList) {
+    return;
+  }
+
+  const selectedMode = selectedBattleMode();
+  const lockedByActiveBattle = Boolean(state.battle && !state.battle.outcome);
+  const levels = totalLevels();
+  elements.battleModeList.innerHTML = "";
+
+  for (const mode of battleModes) {
+    const unlocked = battleModeUnlocked(mode);
+    const enemyText = mode.enemyRarities
+      .map((rarityId) => rarityById(rarityId)?.short)
+      .filter(Boolean)
+      .join("/");
+    const button = document.createElement("button");
+    button.className = `battle-mode-button ${selectedMode.id === mode.id ? "active" : ""} ${unlocked ? "" : "locked"}`;
+    button.type = "button";
+    button.disabled = !unlocked || lockedByActiveBattle;
+    button.style.setProperty("--mode-color", mode.color);
+    button.innerHTML = `
+      <div class="battle-mode-topline">
+        <strong>${mode.name}</strong>
+        <span>${mode.short}</span>
+      </div>
+      <p>${unlocked ? mode.description : `Requiere ${mode.unlockLevel} niveles. Tienes ${levels}.`}</p>
+      <div class="battle-mode-meta">
+        <span>${enemyText}</span>
+        <span>x${formatMultiplier(mode.rewardMultiplier)} recompensa</span>
+      </div>
+    `;
+    button.addEventListener("click", () => {
+      unlockAudio();
+      playSound("ui");
+      state.selectedBattleMode = mode.id;
+      renderBattleModes();
+      renderBattle();
+      saveState();
+    });
+    elements.battleModeList.appendChild(button);
+  }
 }
 
 function renderBattle() {
@@ -2633,16 +3133,39 @@ function renderBattle() {
 
   const battle = state.battle;
   const selected = selectedBattleCard();
+  const selectedMode = selectedBattleMode();
 
   if (!battle) {
     const stats = selected ? battleStatsForCard(selected) : null;
     const role = selected ? cardRole(selected) : null;
+    const modeUnlocked = battleModeUnlocked(selectedMode);
+    const canStart = Boolean(selected && modeUnlocked);
+    const buttonText = !selected
+      ? "Selecciona una carta"
+      : !modeUnlocked
+        ? `Requiere ${selectedMode.unlockLevel} niveles`
+        : `Iniciar ${selectedMode.short}`;
     elements.battleArena.innerHTML = `
-      <div class="battle-empty">
-        <strong>${selected ? selected.name : "Selecciona una carta"}</strong>
-        <span>${selected ? `${role.name} - ${stats.maxHp} vida - ${stats.attack} ataque` : "Elige una carta descubierta para pelear."}</span>
+      <div class="battle-empty battle-setup" style="--role-color: ${role?.color || selectedMode.color}; --mode-color: ${selectedMode.color}">
+        <div class="battle-setup-grid">
+          <div>
+            <span>Tu carta</span>
+            <strong>${selected ? selected.name : "Sin carta"}</strong>
+            <em>${selected ? `${role.name} - ${stats.maxHp} vida - ${stats.attack} ataque` : "Elige una carta descubierta."}</em>
+          </div>
+          <div>
+            <span>Modo</span>
+            <strong>${selectedMode.name}</strong>
+            <em>${selectedMode.description}</em>
+          </div>
+          <div>
+            <span>Recompensa</span>
+            <strong>x${formatMultiplier(selectedMode.rewardMultiplier)}</strong>
+            <em>${modeUnlocked ? "Lista para pelear" : `${totalLevels()}/${selectedMode.unlockLevel} niveles`}</em>
+          </div>
+        </div>
       </div>
-      <button class="battle-start" type="button" ${selected ? "" : "disabled"}>Iniciar pelea</button>
+      <button class="battle-start" type="button" ${canStart ? "" : "disabled"}>${buttonText}</button>
     `;
     const startButton = elements.battleArena.querySelector(".battle-start");
     startButton.addEventListener("click", startBattle);
@@ -2656,7 +3179,16 @@ function renderBattle() {
     return;
   }
 
+  const mode = battleModeById(battle.modeId);
   const role = cardRole(card);
+  let enemyCard = battle.enemyCardId ? cardById(battle.enemyCardId) : null;
+  if (!enemyCard) {
+    enemyCard = randomEnemyCardForMode(mode, card);
+    battle.enemyCardId = enemyCard.id;
+    battle.enemyName = enemyCard.name;
+  }
+  const enemyRole = enemyCard ? cardRole(enemyCard) : roleById("attack");
+  const enemyName = enemyCard?.name || battle.enemyName || "Carta rival";
   const playerPercent = battle.playerMaxHp > 0 ? Math.max(0, Math.min(100, (battle.playerHp / battle.playerMaxHp) * 100)) : 0;
   const enemyPercent = battle.enemyMaxHp > 0 ? Math.max(0, Math.min(100, (battle.enemyHp / battle.enemyMaxHp) * 100)) : 0;
   const outcomeText = battle.outcome === "won"
@@ -2669,26 +3201,40 @@ function renderBattle() {
   const rewardXp = Math.floor(Number(battle.rewardXp || 0) + Number(battle.bonusXp || 0));
 
   elements.battleArena.innerHTML = `
-    <div class="battle-card" style="--role-color: ${role.color}">
-      <div class="battle-line">
-        <strong>${card.name}</strong>
-        <span>${role.short}</span>
+    <div class="battle-card battle-card-expanded" style="--role-color: ${role.color}; --enemy-color: ${enemyRole.color}; --mode-color: ${mode.color}">
+      <div class="battle-mode-banner">
+        <span>${mode.name}</span>
+        <strong>${outcomeText}</strong>
+        <em>${money(rewardGold)} / +${rewardXp} XP</em>
       </div>
-      <div class="battle-bar" aria-label="Vida de ${card.name}">
-        <span style="width: ${playerPercent}%"></span>
-        <em>${Math.ceil(battle.playerHp)}/${battle.playerMaxHp}</em>
-      </div>
-      <div class="battle-line">
-        <strong>${battle.enemyName}</strong>
-        <span>EN</span>
-      </div>
-      <div class="battle-bar enemy" aria-label="Vida del enemigo">
-        <span style="width: ${enemyPercent}%"></span>
-        <em>${Math.ceil(battle.enemyHp)}/${battle.enemyMaxHp}</em>
-      </div>
-      <div class="battle-reward">
-        <span>${outcomeText}</span>
-        <span>${money(rewardGold)} / +${rewardXp} XP</span>
+      <div class="battle-duel">
+        <div class="battle-combatant">
+          <div class="battle-combatant-title">
+            <span>Tu carta</span>
+            <strong>${card.name}</strong>
+            <em>${role.short}</em>
+          </div>
+          <div class="battle-card-preview player-card-preview" aria-label="Carta de ${card.name}"></div>
+          <div class="battle-bar" aria-label="Vida de ${card.name}">
+            <span style="width: ${playerPercent}%"></span>
+            <em>${Math.ceil(battle.playerHp)}/${battle.playerMaxHp}</em>
+          </div>
+          <small>${battle.playerAttack} ataque${battle.shield ? ` - ${battle.shield} escudo` : ""}</small>
+        </div>
+        <div class="battle-vs" aria-hidden="true">VS</div>
+        <div class="battle-combatant enemy">
+          <div class="battle-combatant-title">
+            <span>Carta rival</span>
+            <strong>${enemyName}</strong>
+            <em>${enemyRole.short}</em>
+          </div>
+          <div class="battle-card-preview enemy-card-preview" aria-label="Carta rival ${enemyName}"></div>
+          <div class="battle-bar enemy" aria-label="Vida del enemigo">
+            <span style="width: ${enemyPercent}%"></span>
+            <em>${Math.ceil(battle.enemyHp)}/${battle.enemyMaxHp}</em>
+          </div>
+          <small>${battle.enemyAttack} ataque</small>
+        </div>
       </div>
       <div class="battle-moves">
         ${moves.map((move) => `
@@ -2705,6 +3251,18 @@ function renderBattle() {
     </div>
   `;
 
+  elements.battleArena.querySelector(".player-card-preview")?.appendChild(createCardElement(card, {
+    mini: true,
+    reveal: true
+  }));
+
+  if (enemyCard) {
+    elements.battleArena.querySelector(".enemy-card-preview")?.appendChild(createCardElement(enemyCard, {
+      mini: true,
+      reveal: true
+    }));
+  }
+
   elements.battleArena.querySelectorAll(".battle-move").forEach((button) => {
     button.addEventListener("click", () => useBattleMove(button.dataset.move));
   });
@@ -2713,7 +3271,7 @@ function renderBattle() {
       startBattle();
     } else {
       state.battle = null;
-      renderBattle();
+      renderAll();
       saveState();
     }
   });
@@ -2882,6 +3440,7 @@ function renderAll() {
   renderCollection();
   renderLastCard();
   renderSelected();
+  renderBattleModes();
   renderBattle();
   renderExpeditions();
   renderLog();
