@@ -1,6 +1,8 @@
-const SAVE_KEY = "forja-cartas-v1";
+const SAVE_FILE_FORMAT = "gacha-save";
+const SAVE_FILE_VERSION = 1;
 const SOUND_KEY = "forja-cartas-sound-v1";
 const MUSIC_KEY = "forja-cartas-music-v1";
+const TUTORIAL_KEY = "forja-cartas-tutorial-v2";
 const MUSIC_LOOP_SECONDS = 12.8;
 const DEFAULT_MUSIC_FILES = [
   "music/track1.mp3",
@@ -11,6 +13,23 @@ const MAX_ACTIVE_MOVES = 4;
 const XP_PER_CARD_PULL = 5;
 const BASE_CARD_XP_REQUIRED = 50;
 const CARD_XP_GROWTH = 1.3;
+
+function readStoredValue(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeStoredValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 const rarities = [
   { id: "common", name: "Comun", short: "C", color: "var(--common)", baseEnchant: 80 },
@@ -332,39 +351,39 @@ const BASE_UNIQUE_CHANCE = 0.008;
 
 const roleMoves = {
   attack: [
-    { id: "heavy_strike", name: "Golpe feroz", description: "Mucho dano directo.", unlockLevel: 1, damage: 1.25 },
+    { id: "heavy_strike", name: "Golpe feroz", description: "Mucho daño directo.", unlockLevel: 1, damage: 1.25 },
     { id: "execute", name: "Remate", description: "Mas fuerte contra enemigos heridos.", unlockLevel: 1, damage: 0.9, execute: true },
     { id: "bleeding_cut", name: "Corte sangrante", description: "Golpe fuerte y preciso.", unlockLevel: 4, damage: 1.05, goldBonus: 0.08 },
-    { id: "battle_roar", name: "Rugido de guerra", description: "Dano medio y XP extra.", unlockLevel: 8, damage: 0.88, xpBonus: 3 },
-    { id: "meteor_charge", name: "Carga meteoro", description: "Ataque brutal de alto dano.", unlockLevel: 13, damage: 1.55 }
+    { id: "battle_roar", name: "Rugido de guerra", description: "Daño medio y XP extra.", unlockLevel: 8, damage: 0.88, xpBonus: 3 },
+    { id: "meteor_charge", name: "Carga meteoro", description: "Ataque brutal de alto daño.", unlockLevel: 13, damage: 1.55 }
   ],
   defense: [
-    { id: "harden", name: "Endurecer", description: "Gana escudo y recibe menos dano.", unlockLevel: 1, damage: 0.25, shield: 1.15 },
-    { id: "body_blow", name: "Golpe cuerpo", description: "Dano medio y algo de escudo.", unlockLevel: 1, damage: 0.82, shield: 0.35 },
-    { id: "shield_bash", name: "Escudazo", description: "Dano firme y mucho escudo.", unlockLevel: 4, damage: 0.62, shield: 0.78 },
-    { id: "iron_wall", name: "Muro de hierro", description: "Casi no dana, bloquea muchisimo.", unlockLevel: 8, damage: 0.18, shield: 1.65 },
+    { id: "harden", name: "Endurecer", description: "Gana escudo y recibe menos daño.", unlockLevel: 1, damage: 0.25, shield: 1.15 },
+    { id: "body_blow", name: "Golpe cuerpo", description: "Daño medio y algo de escudo.", unlockLevel: 1, damage: 0.82, shield: 0.35 },
+    { id: "shield_bash", name: "Escudazo", description: "Daño firme y mucho escudo.", unlockLevel: 4, damage: 0.62, shield: 0.78 },
+    { id: "iron_wall", name: "Muro de hierro", description: "Casi no daña, bloquea muchisimo.", unlockLevel: 8, damage: 0.18, shield: 1.65 },
     { id: "counter_guard", name: "Guardia contraria", description: "Escudo alto con buen golpe.", unlockLevel: 13, damage: 0.95, shield: 0.7 }
   ],
   magic: [
-    { id: "arcane_bolt", name: "Rayo arcano", description: "Dano estable y preciso.", unlockLevel: 1, damage: 1.05 },
+    { id: "arcane_bolt", name: "Rayo arcano", description: "Daño estable y preciso.", unlockLevel: 1, damage: 1.05 },
     { id: "mystic_barrier", name: "Barrera mistica", description: "Escudo magico con contraataque.", unlockLevel: 1, damage: 0.62, shield: 0.7 },
-    { id: "mana_burst", name: "Estallido mana", description: "Dano alto de energia pura.", unlockLevel: 4, damage: 1.28 },
-    { id: "rune_prison", name: "Prision runica", description: "Dano y barrera estable.", unlockLevel: 8, damage: 0.78, shield: 0.95 },
-    { id: "starfall", name: "Lluvia estelar", description: "Hechizo enorme de mucho dano.", unlockLevel: 13, damage: 1.62 }
+    { id: "mana_burst", name: "Estallido mana", description: "Daño alto de energia pura.", unlockLevel: 4, damage: 1.28 },
+    { id: "rune_prison", name: "Prision runica", description: "Daño y barrera estable.", unlockLevel: 8, damage: 0.78, shield: 0.95 },
+    { id: "starfall", name: "Lluvia estelar", description: "Hechizo enorme de mucho daño.", unlockLevel: 13, damage: 1.62 }
   ],
   support: [
     { id: "inspire", name: "Inspirar", description: "Cura y prepara el siguiente golpe.", unlockLevel: 1, damage: 0.52, heal: 0.65 },
-    { id: "quick_hit", name: "Golpe rapido", description: "Dano agil y recompensa de XP.", unlockLevel: 1, damage: 0.86, xpBonus: 2 },
-    { id: "healing_note", name: "Nota curativa", description: "Cura fuerte con dano bajo.", unlockLevel: 4, damage: 0.34, heal: 1.05 },
-    { id: "team_spark", name: "Chispa guia", description: "Dano y buena XP extra.", unlockLevel: 8, damage: 0.72, xpBonus: 5 },
+    { id: "quick_hit", name: "Golpe rapido", description: "Daño agil y recompensa de XP.", unlockLevel: 1, damage: 0.86, xpBonus: 2 },
+    { id: "healing_note", name: "Nota curativa", description: "Cura fuerte con daño bajo.", unlockLevel: 4, damage: 0.34, heal: 1.05 },
+    { id: "team_spark", name: "Chispa guia", description: "Daño y buena XP extra.", unlockLevel: 8, damage: 0.72, xpBonus: 5 },
     { id: "heroic_pulse", name: "Pulso heroico", description: "Cura y golpea con fuerza.", unlockLevel: 13, damage: 1.02, heal: 0.72 }
   ],
   economy: [
-    { id: "coin_toss", name: "Monedazo", description: "Dano y oro extra si ganas.", unlockLevel: 1, damage: 0.78, goldBonus: 0.16 },
+    { id: "coin_toss", name: "Monedazo", description: "Daño y oro extra si ganas.", unlockLevel: 1, damage: 0.78, goldBonus: 0.16 },
     { id: "good_deal", name: "Trato astuto", description: "Escudo y oro extra si ganas.", unlockLevel: 1, damage: 0.48, shield: 0.55, goldBonus: 0.28 },
-    { id: "gold_rush", name: "Fiebre de oro", description: "Dano con oro extra alto.", unlockLevel: 4, damage: 0.82, goldBonus: 0.32 },
+    { id: "gold_rush", name: "Fiebre de oro", description: "Daño con oro extra alto.", unlockLevel: 4, damage: 0.82, goldBonus: 0.32 },
     { id: "safe_bet", name: "Apuesta segura", description: "Escudo y oro moderado.", unlockLevel: 8, damage: 0.54, shield: 0.85, goldBonus: 0.22 },
-    { id: "jackpot_hit", name: "Golpe jackpot", description: "Mucho dano y gran botin.", unlockLevel: 13, damage: 1.18, goldBonus: 0.42 }
+    { id: "jackpot_hit", name: "Golpe jackpot", description: "Mucho daño y gran botín.", unlockLevel: 13, damage: 1.18, goldBonus: 0.42 }
   ]
 };
 
@@ -388,6 +407,8 @@ const battleModes = [
     enemyRarities: ["common", "uncommon"],
     enemyHpMultiplier: 0.72,
     enemyAttackMultiplier: 0.68,
+    enemyLevelRange: [1, 3],
+    enemyEnchantRange: [0, 1],
     rewardMultiplier: 0.65,
     description: "Riesgo bajo para probar cartas nuevas."
   },
@@ -400,6 +421,8 @@ const battleModes = [
     enemyRarities: ["common", "uncommon", "rare"],
     enemyHpMultiplier: 1,
     enemyAttackMultiplier: 1,
+    enemyLevelRange: [3, 7],
+    enemyEnchantRange: [0, 2],
     rewardMultiplier: 1,
     description: "Pelea pareja contra cartas del mazo."
   },
@@ -412,6 +435,8 @@ const battleModes = [
     enemyRarities: ["rare", "veryRare"],
     enemyHpMultiplier: 1.45,
     enemyAttackMultiplier: 1.28,
+    enemyLevelRange: [7, 13],
+    enemyEnchantRange: [1, 4],
     rewardMultiplier: 1.9,
     description: "Enemigos fuertes y recompensas mejores."
   },
@@ -424,6 +449,8 @@ const battleModes = [
     enemyRarities: ["veryRare", "legendary", "artifact"],
     enemyHpMultiplier: 2.15,
     enemyAttackMultiplier: 1.78,
+    enemyLevelRange: [13, 20],
+    enemyEnchantRange: [3, 6],
     rewardMultiplier: 3.25,
     description: "Cartas de alto rango con botin grande."
   },
@@ -436,6 +463,8 @@ const battleModes = [
     enemyRarities: ["legendary", "artifact", "mythic", "special"],
     enemyHpMultiplier: 3.35,
     enemyAttackMultiplier: 2.45,
+    enemyLevelRange: [19, 20],
+    enemyEnchantRange: [5, 7],
     rewardMultiplier: 5.5,
     description: "Una pelea brutal por recompensas enormes."
   }
@@ -451,6 +480,7 @@ const expeditions = [
     duration: 300,
     gold: 180,
     xp: 3,
+    materials: 2,
     description: "Una salida corta para que cualquier carta gane oro y practica."
   },
   {
@@ -462,6 +492,7 @@ const expeditions = [
     duration: 600,
     gold: 520,
     xp: 4,
+    materials: 3,
     description: "Explora restos arcanos con la carta que elijas."
   },
   {
@@ -473,6 +504,7 @@ const expeditions = [
     duration: 900,
     gold: 1450,
     xp: 5,
+    materials: 4,
     description: "Protege un envio largo y vuelve con oro estable."
   },
   {
@@ -484,6 +516,7 @@ const expeditions = [
     duration: 1500,
     gold: 3900,
     xp: 6,
+    materials: 5,
     description: "Una guardia prolongada para cartas de cualquier rol."
   },
   {
@@ -495,6 +528,7 @@ const expeditions = [
     duration: 2400,
     gold: 9400,
     xp: 8,
+    materials: 6,
     description: "Un encargo largo que premia constancia con XP extra."
   },
   {
@@ -506,14 +540,27 @@ const expeditions = [
     duration: 3600,
     gold: 26000,
     xp: 10,
+    materials: 8,
     description: "Una expedicion mayor para cartas bien entrenadas."
   }
 ];
+
+function normalizeEnchantEssence(value) {
+  return Math.max(0, Math.floor(Number(value || 0)));
+}
+
+function legacyMaterialTotal(materials) {
+  if (!materials || typeof materials !== "object") {
+    return 0;
+  }
+  return Object.values(materials).reduce((total, amount) => total + normalizeEnchantEssence(amount), 0);
+}
 
 const initialState = {
   gold: 80,
   owned: {},
   pulls: {},
+  enchantEssence: 0,
   selectedCardId: null,
   lastCardId: null,
   lastReveal: null,
@@ -521,6 +568,7 @@ const initialState = {
   expeditions: {},
   battle: null,
   selectedBattleMode: "training",
+  activeView: "game",
   filter: "all",
   lastSavedAt: Date.now()
 };
@@ -530,6 +578,7 @@ function createInitialState() {
     gold: initialState.gold,
     owned: {},
     pulls: {},
+    enchantEssence: 0,
     selectedCardId: null,
     lastCardId: null,
     lastReveal: null,
@@ -537,6 +586,7 @@ function createInitialState() {
     expeditions: {},
     battle: null,
     selectedBattleMode: "training",
+    activeView: "game",
     filter: "all",
     lastSavedAt: Date.now()
   };
@@ -544,10 +594,9 @@ function createInitialState() {
 
 let state = loadState();
 let lastTick = Date.now();
-let saveTimer = 0;
 let enchantEffect = null;
-let soundEnabled = localStorage.getItem(SOUND_KEY) !== "off";
-let musicEnabled = localStorage.getItem(MUSIC_KEY) !== "off";
+let soundEnabled = readStoredValue(SOUND_KEY) !== "off";
+let musicEnabled = readStoredValue(MUSIC_KEY) !== "off";
 let audioContext = null;
 let musicTimer = null;
 let musicNodes = [];
@@ -558,20 +607,20 @@ let goldPulseTimer = null;
 let localImageMap = null;
 const IMAGE_FIT_KEY = 'forja-image-fit';
 // 'cover' fills the card (may crop). 'contain' shows whole image (may leave empty space).
-let imageFitMode = localStorage.getItem(IMAGE_FIT_KEY) || 'cover';
+let imageFitMode = readStoredValue(IMAGE_FIT_KEY) || 'cover';
 const MUSIC_VOL_KEY = 'forja-music-volume';
-let musicVolume = Number(localStorage.getItem(MUSIC_VOL_KEY));
+let musicVolume = Number(readStoredValue(MUSIC_VOL_KEY));
 if (!Number.isFinite(musicVolume)) musicVolume = 0.42;
 
 function setMusicVolume(v) {
   musicVolume = Number(v);
-  try { localStorage.setItem(MUSIC_VOL_KEY, String(musicVolume)); } catch (e) {}
+  writeStoredValue(MUSIC_VOL_KEY, String(musicVolume));
   if (musicAudioElement) musicAudioElement.volume = musicVolume;
 }
 
 function setImageFitMode(mode) {
   imageFitMode = mode === 'contain' ? 'contain' : 'cover';
-  try { localStorage.setItem(IMAGE_FIT_KEY, imageFitMode); } catch (e) {}
+  writeStoredValue(IMAGE_FIT_KEY, imageFitMode);
   document.querySelectorAll('.card-art img').forEach((img) => adjustImageFit(img));
 }
 
@@ -611,6 +660,7 @@ async function scanLocalImages() {
   renderCollection();
   renderLastCard();
   renderSelected();
+  renderBattleCardList();
   renderBattle();
 }
 
@@ -622,22 +672,42 @@ const elements = {
   lastCardSlot: document.querySelector("#lastCardSlot"),
   lastCardTitle: document.querySelector("#lastCardTitle"),
   lastCardText: document.querySelector("#lastCardText"),
+  batchResultsPanel: document.querySelector("#batchResultsPanel"),
+  batchResultsSummary: document.querySelector("#batchResultsSummary"),
+  batchResultsGrid: document.querySelector("#batchResultsGrid"),
   collectionGrid: document.querySelector("#collectionGrid"),
   collectionSummary: document.querySelector("#collectionSummary"),
   rarityFilters: document.querySelector("#rarityFilters"),
   selectedCardSlot: document.querySelector("#selectedCardSlot"),
   selectedDetails: document.querySelector("#selectedDetails"),
+  materialInventory: document.querySelector("#materialInventory"),
   enchantButton: document.querySelector("#enchantButton"),
+  gameView: document.querySelector("#gameView"),
+  combatView: document.querySelector("#combatView"),
+  battleViewButton: document.querySelector("#battleViewButton"),
+  gameViewButton: document.querySelector("#gameViewButton"),
+  battleCardList: document.querySelector("#battleCardList"),
   battleModeList: document.querySelector("#battleModeList"),
   battleArena: document.querySelector("#battleArena"),
   pullLog: document.querySelector("#pullLog"),
   expeditionList: document.querySelector("#expeditionList"),
   toastStack: document.querySelector("#toastStack"),
+  tutorialOverlay: document.querySelector("#tutorialOverlay"),
+  tutorialTitle: document.querySelector("#tutorialTitle"),
+  tutorialText: document.querySelector("#tutorialText"),
+  tutorialStepCount: document.querySelector("#tutorialStepCount"),
+  tutorialProgress: document.querySelector("#tutorialProgress"),
+  tutorialBack: document.querySelector("#tutorialBack"),
+  tutorialNext: document.querySelector("#tutorialNext"),
+  tutorialSkip: document.querySelector("#tutorialSkip"),
   soundButton: document.querySelector("#soundButton"),
   musicButton: document.querySelector("#musicButton"),
   musicVolume: document.querySelector("#musicVolume"),
   playMusicButton: document.querySelector("#playMusicButton"),
-  resetButton: document.querySelector("#resetButton")
+  resetButton: document.querySelector("#resetButton"),
+  saveFileButton: document.querySelector("#saveFileButton"),
+  loadFileButton: document.querySelector("#loadFileButton"),
+  saveFileInput: document.querySelector("#saveFileInput")
   
 };
 
@@ -684,39 +754,158 @@ function ownedEntry(cardId) {
   return state.owned[cardId];
 }
 
-function loadState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (!saved || typeof saved !== "object") {
-      return createInitialState();
-    }
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
 
-    const next = {
-      ...createInitialState(),
-      ...saved,
-      owned: saved.owned || {},
-      pulls: saved.pulls || {},
-      lastReveal: saved.lastReveal || null,
-      expeditions: saved.expeditions && typeof saved.expeditions === "object" ? saved.expeditions : {},
-      battle: saved.battle && typeof saved.battle === "object" ? saved.battle : null,
-      selectedBattleMode: battleModeById(saved.selectedBattleMode)?.id || initialState.selectedBattleMode,
-      log: Array.isArray(saved.log) ? saved.log.slice(0, 8) : []
-    };
-    normalizeOwnedCards(next.owned);
-
-    const now = Date.now();
-    const elapsed = Math.max(0, Math.min(now - Number(next.lastSavedAt || now), 1000 * 60 * 60 * 8));
-    next.gold += totalIncome(next) * (elapsed / 1000);
-    next.lastSavedAt = now;
-    return next;
-  } catch {
-    return createInitialState();
+function stateFromSaveData(saved, applyOfflineProgress = true) {
+  if (!isPlainObject(saved)) {
+    throw new Error("El archivo no contiene una partida válida.");
   }
+  if (!isPlainObject(saved.owned) || !Number.isFinite(Number(saved.gold))) {
+    throw new Error("El archivo de partida está incompleto o dañado.");
+  }
+
+  const next = createInitialState();
+  const savedOwned = isPlainObject(saved.owned) ? saved.owned : {};
+  next.owned = {};
+  for (const card of cards) {
+    const entry = savedOwned[card.id];
+    if (isPlainObject(entry)) {
+      const copies = Number(entry.copies);
+      const xp = entry.xp === undefined ? undefined : Number(entry.xp);
+      const enchant = Number(entry.enchant);
+      next.owned[card.id] = normalizeCardEntry({
+        copies: Number.isFinite(copies) ? Math.max(0, Math.floor(copies)) : 0,
+        ...(Number.isFinite(xp) ? { xp } : {}),
+        enchant: Number.isFinite(enchant) ? Math.max(0, Math.floor(enchant)) : 0,
+        uniqueUnlocked: entry.uniqueUnlocked === true,
+        moves: Array.isArray(entry.moves) ? entry.moves.filter((id) => typeof id === "string") : [],
+        pendingMoves: Array.isArray(entry.pendingMoves) ? entry.pendingMoves.filter((id) => typeof id === "string") : [],
+        skippedMoves: Array.isArray(entry.skippedMoves) ? entry.skippedMoves.filter((id) => typeof id === "string") : []
+      });
+    }
+  }
+
+  const savedGold = Number(saved.gold);
+  next.gold = Number.isFinite(savedGold) ? Math.max(0, savedGold) : initialState.gold;
+  const savedPulls = isPlainObject(saved.pulls) ? saved.pulls : {};
+  next.pulls = Object.fromEntries(gachas.map((gacha) => {
+    const amount = Number(savedPulls[gacha.id] || 0);
+    return [gacha.id, Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0];
+  }));
+  next.enchantEssence = normalizeEnchantEssence(saved.enchantEssence ?? legacyMaterialTotal(saved.materials));
+  next.selectedCardId = cardById(saved.selectedCardId) && cardLevel(next.owned[saved.selectedCardId]) > 0
+    ? saved.selectedCardId
+    : null;
+  next.lastCardId = cardById(saved.lastCardId) ? saved.lastCardId : null;
+
+  if (isPlainObject(saved.lastReveal) && cardById(saved.lastReveal.cardId)) {
+    next.lastReveal = {
+      cardId: saved.lastReveal.cardId,
+      uniqueUnlocked: saved.lastReveal.uniqueUnlocked === true,
+      unlockedExpeditions: Array.isArray(saved.lastReveal.unlockedExpeditions)
+        ? saved.lastReveal.unlockedExpeditions.filter((id) => expeditions.some((item) => item.id === id))
+        : [],
+      batchCount: Math.max(1, Math.floor(Number(saved.lastReveal.batchCount) || 1)),
+      results: Array.isArray(saved.lastReveal.results) ? saved.lastReveal.results.filter((id) => cardById(id)) : [],
+      time: Number(saved.lastReveal.time) || Date.now()
+    };
+  }
+
+  const savedExpeditions = isPlainObject(saved.expeditions) ? saved.expeditions : {};
+  next.expeditions = {};
+  for (const expedition of expeditions) {
+    const entry = savedExpeditions[expedition.id];
+    if (!isPlainObject(entry) || !cardById(entry.cardId)) {
+      continue;
+    }
+    next.expeditions[expedition.id] = {
+      cardId: entry.cardId,
+      startedAt: Number(entry.startedAt) || Date.now(),
+      duration: Math.max(0, Number(entry.duration) || 0),
+      rewardGold: Math.max(0, Number(entry.rewardGold) || 0),
+      rewardXp: Math.max(0, Number(entry.rewardXp) || 0),
+      rewardMaterials: normalizeEnchantEssence(entry.rewardMaterials)
+    };
+  }
+
+  const battle = saved.battle;
+  const validBattle = isPlainObject(battle)
+    && cardById(battle.cardId)
+    && cardById(battle.enemyCardId)
+    && battleModeById(battle.modeId)
+    && ["playerHp", "playerMaxHp", "playerAttack", "enemyHp", "enemyMaxHp", "enemyAttack"].every((key) => Number.isFinite(Number(battle[key])));
+  next.battle = validBattle ? battle : null;
+  next.selectedBattleMode = battleModeById(saved.selectedBattleMode)?.id || initialState.selectedBattleMode;
+  next.activeView = saved.activeView === "battle" ? "battle" : "game";
+  next.filter = saved.filter === "all" || rarities.some((rarity) => rarity.id === saved.filter) ? saved.filter : "all";
+  next.log = Array.isArray(saved.log) ? saved.log.filter(isPlainObject).slice(0, 8) : [];
+
+  const savedAt = Number(saved.lastSavedAt);
+  next.lastSavedAt = Number.isFinite(savedAt) && savedAt > 0 ? savedAt : Date.now();
+  if (applyOfflineProgress) {
+    const elapsed = Math.max(0, Math.min(Date.now() - next.lastSavedAt, 1000 * 60 * 60 * 8));
+    next.gold += totalIncome(next) * (elapsed / 1000);
+  }
+  next.lastSavedAt = Date.now();
+  return next;
+}
+
+function loadState() {
+  return createInitialState();
 }
 
 function saveState() {
+  // La partida solo se guarda cuando el usuario descarga el archivo con Guardar.
+}
+
+function downloadSaveFile() {
   state.lastSavedAt = Date.now();
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  const fileContents = {
+    format: SAVE_FILE_FORMAT,
+    version: SAVE_FILE_VERSION,
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(fileContents, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `gacha-partida-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function loadSaveFile(file) {
+  if (!file) {
+    return;
+  }
+
+  try {
+    const data = JSON.parse(await file.text());
+    if (!isPlainObject(data) || data.format !== SAVE_FILE_FORMAT || data.version !== SAVE_FILE_VERSION) {
+      throw new Error("El archivo no es un guardado compatible de Gacha.");
+    }
+    const loadedState = stateFromSaveData(data.state);
+    if (!window.confirm("Cargar esta partida reemplazará el progreso actual. ¿Continuar?")) {
+      return;
+    }
+
+    clearCardRoulette();
+    state = loadedState;
+    renderAll();
+    saveState();
+    window.alert("Partida cargada correctamente.");
+  } catch (error) {
+    window.alert(`No se pudo cargar la partida: ${error.message || "archivo inválido"}`);
+  } finally {
+    if (elements.saveFileInput) {
+      elements.saveFileInput.value = "";
+    }
+  }
 }
 
 function formatNumber(value) {
@@ -769,12 +958,18 @@ function showPullNotification(cardId, pullInfo = {}) {
   const copies = Math.max(1, Number(pullInfo.copies || 1));
   const totalXpGain = Math.max(0, Math.floor(Number(pullInfo.totalXpGain ?? pullInfo.xpGain ?? 0)));
   const uniqueCount = Math.max(0, Math.floor(Number(pullInfo.uniqueCount || 0)));
-  const title = batchCount > 1 ? `Mejor carta de ${batchCount} tiradas` : "Carta obtenida";
-  const details = [
-    `${rarity.name} - ${role.name}`,
-    copies > 1 ? `${copies} copias destacadas` : "+1 copia",
-    totalXpGain > 0 ? `+${totalXpGain} XP total` : "XP maximo"
-  ];
+  const title = batchCount > 1 ? `Resultado de x${batchCount} tiradas` : "Carta obtenida";
+  const details = batchCount > 1
+    ? [
+      `Mejor carta: ${rarity.name} - ${role.name}`,
+      `${pullInfo.results?.length || batchCount} cartas obtenidas; mira la lista completa debajo`,
+      totalXpGain > 0 ? `+${totalXpGain} XP total` : "XP maximo"
+    ]
+    : [
+      `${rarity.name} - ${role.name}`,
+      copies > 1 ? `${copies} copias destacadas` : "+1 copia",
+      totalXpGain > 0 ? `+${totalXpGain} XP total` : "XP maximo"
+    ];
 
   if (pullInfo.uniqueUnlocked || uniqueCount > 0) {
     details.push(uniqueCount > 1 ? `${uniqueCount} unicas desbloqueadas` : "Unica desbloqueada");
@@ -1393,7 +1588,7 @@ function renderMusicButton() {
 function toggleSound() {
   unlockAudio();
   soundEnabled = !soundEnabled;
-  localStorage.setItem(SOUND_KEY, soundEnabled ? "on" : "off");
+  writeStoredValue(SOUND_KEY, soundEnabled ? "on" : "off");
   renderSoundButton();
   if (soundEnabled) {
     playSound("toggle");
@@ -1402,7 +1597,7 @@ function toggleSound() {
 
 function toggleMusic() {
   musicEnabled = !musicEnabled;
-  localStorage.setItem(MUSIC_KEY, musicEnabled ? "on" : "off");
+  writeStoredValue(MUSIC_KEY, musicEnabled ? "on" : "off");
   renderMusicButton();
 
   if (musicEnabled) {
@@ -1524,24 +1719,36 @@ function currentEnchantMaterial(entry) {
   return level > 0 ? enchantMaterials[level - 1] : baseEnchantMaterial;
 }
 
-function rollEnchantMaterial() {
-  const total = enchantMaterials.reduce((sum, material) => sum + material.weight, 0);
+function enchantEssenceCount() {
+  return normalizeEnchantEssence(state.enchantEssence);
+}
+
+function enchantMaterialCost(entry) {
+  return 2 + enchantLevel(entry) * 2;
+}
+
+function formatMaterialRewards(amount) {
+  const total = normalizeEnchantEssence(amount);
+  return `${total} ${total === 1 ? "material" : "materiales"}`;
+}
+
+function rollEnchantMaterial(currentLevel = 0) {
+  const availableMaterials = enchantMaterials.filter((material) => enchantMaterialLevel(material) > currentLevel);
+  const total = availableMaterials.reduce((sum, material) => sum + material.weight, 0);
+  if (total <= 0) {
+    return null;
+  }
+
   let roll = Math.random() * total;
 
-  for (const material of enchantMaterials) {
+  for (const material of availableMaterials) {
     roll -= material.weight;
     if (roll <= 0) {
       return material;
     }
   }
 
-  return enchantMaterials[0];
-}
-
-function diamondChance() {
-  const total = enchantMaterials.reduce((sum, material) => sum + material.weight, 0);
-  const diamond = enchantMaterials[enchantMaterials.length - 1];
-  return Math.round((diamond.weight / total) * 100);
+  return availableMaterials[0];
 }
 
 function roleById(roleId) {
@@ -1881,6 +2088,12 @@ function expeditionRewardXp(expedition, cardId = state.selectedCardId) {
   return expedition.xp + Math.floor(cardPower(cardId) / 18) + Math.floor(passiveModifiers().pullXpBonus / 2);
 }
 
+function expeditionRewardMaterials(expedition, cardId = state.selectedCardId) {
+  const power = cardPower(cardId);
+  const bonus = expedition.recommendedPower > 0 && power >= expedition.recommendedPower * 1.5 ? 1 : 0;
+  return normalizeEnchantEssence(expedition.materials) + bonus;
+}
+
 function expeditionRemaining(expeditionState) {
   if (!expeditionState) {
     return 0;
@@ -1895,12 +2108,11 @@ function movesForCard(card) {
     .filter(Boolean);
 }
 
-function battleStatsForCard(card) {
-  const entry = ownedEntry(card.id);
-
-  const level = cardLevel(entry);
+function battleStatsForCard(card, options = {}) {
+  const entry = options.entry || ownedEntry(card.id);
+  const level = Math.max(1, Math.floor(Number(options.level ?? cardLevel(entry))));
   const rarity = rarityById(card.rarity);
-  const material = currentEnchantMaterial(entry);
+  const material = options.material || currentEnchantMaterial(entry);
 
   // =========================
   // RAREZA
@@ -1949,7 +2161,7 @@ function battleStatsForCard(card) {
   // UNIQUE
   // =========================
 
-  if (cardUniqueUnlocked(card.id)) {
+  if (options.unique ?? cardUniqueUnlocked(card.id)) {
     hp *= 1.12;
     attack *= 1.18;
   }
@@ -2015,43 +2227,51 @@ function randomEnemyCardForMode(mode, playerCard) {
   return pool[Math.floor(Math.random() * pool.length)] || playerCard;
 }
 
-function battleEnemyStatsForCard(enemyCard, playerCard, mode) {
-  const playerLevel = Math.max(1, cardLevel(ownedEntry(playerCard.id)));
-  const playerTotalLevels = Math.max(1, totalLevels());
-  const enemyRank = rarityRankById(enemyCard.rarity);
-  const enemyRole = cardRole(enemyCard);
+function randomInteger(min, max) {
+  const low = Math.floor(Math.min(min, max));
+  const high = Math.floor(Math.max(min, max));
+  return low + Math.floor(Math.random() * (high - low + 1));
+}
 
-  let hp = 58 + playerLevel * 18 + Math.sqrt(playerTotalLevels) * 26 + enemyRank * 34;
-  let attack = 7 + playerLevel * 4.3 + Math.sqrt(playerTotalLevels) * 2.8 + enemyRank * 5.5;
-
-  switch (enemyRole.id) {
-    case "defense":
-      hp *= 1.24;
-      attack *= 0.92;
-      break;
-    case "attack":
-      hp *= 0.94;
-      attack *= 1.2;
-      break;
-    case "magic":
-      attack *= 1.12;
-      break;
-    case "support":
-      hp *= 1.1;
-      break;
-    case "economy":
-      hp *= 0.94;
-      attack *= 0.94;
-      break;
-  }
-
-  hp *= mode.enemyHpMultiplier * (0.92 + Math.random() * 0.16);
-  attack *= mode.enemyAttackMultiplier * (0.92 + Math.random() * 0.16);
+function enemyProfileForMode(enemyCard, mode) {
+  const [minLevel, maxLevel] = mode.enemyLevelRange || [1, 1];
+  const [minEnchant, maxEnchant] = mode.enemyEnchantRange || [0, 0];
+  const level = Math.max(1, Math.min(MAX_CARD_LEVEL, randomInteger(minLevel, maxLevel)));
+  const enchant = Math.max(0, Math.min(enchantMaterials.length, randomInteger(minEnchant, maxEnchant)));
+  const moves = allMovesForCard(enemyCard)
+    .filter((move) => Number(move.unlockLevel || 1) <= level)
+    .map((move) => move.id);
 
   return {
-    maxHp: Math.max(12, Math.floor(hp)),
-    attack: Math.max(2, Math.floor(attack))
+    level,
+    enchant,
+    moves: moves.length ? moves : defaultMoveIdsForCard(enemyCard)
   };
+}
+
+function battleEnemyStatsForCard(enemyCard, profile, mode) {
+  const material = profile.enchant > 0 ? enchantMaterials[profile.enchant - 1] : baseEnchantMaterial;
+  const stats = battleStatsForCard(enemyCard, {
+    entry: { enchant: profile.enchant },
+    level: profile.level,
+    material,
+    unique: false
+  });
+
+  return {
+    maxHp: Math.max(12, Math.floor(stats.maxHp * mode.enemyHpMultiplier * (0.92 + Math.random() * 0.16))),
+    attack: Math.max(2, Math.floor(stats.attack * mode.enemyAttackMultiplier * (0.92 + Math.random() * 0.16)))
+  };
+}
+
+function enemyMovesForBattle(battle, enemyCard) {
+  const level = Math.max(1, Math.floor(Number(battle.enemyLevel || 1)));
+  const moveIds = Array.isArray(battle.enemyMoves) && battle.enemyMoves.length
+    ? battle.enemyMoves
+    : allMovesForCard(enemyCard)
+      .filter((move) => Number(move.unlockLevel || 1) <= level)
+      .map((move) => move.id);
+  return moveIds.map((moveId) => moveById(enemyCard, moveId)).filter(Boolean);
 }
 
 function createBattle(card, modeId = state.selectedBattleMode) {
@@ -2060,15 +2280,19 @@ function createBattle(card, modeId = state.selectedBattleMode) {
   const level = cardLevel(ownedEntry(card.id));
   const power = cardPower(card.id);
   const enemyCard = randomEnemyCardForMode(mode, card);
-  const enemyStats = battleEnemyStatsForCard(enemyCard, card, mode);
+  const enemyProfile = enemyProfileForMode(enemyCard, mode);
+  const enemyStats = battleEnemyStatsForCard(enemyCard, enemyProfile, mode);
   const enemyRank = rarityRankById(enemyCard.rarity);
-  const rewardBase = 42 + level * 14 + power * 7 + enemyRank * 24;
+  const rewardBase = 42 + level * 14 + power * 7 + enemyRank * 24 + enemyProfile.level * 8;
 
   return {
     cardId: card.id,
     modeId: mode.id,
     enemyCardId: enemyCard.id,
     enemyName: enemyCard.name || battleEnemies[Math.floor(Math.random() * battleEnemies.length)],
+    enemyLevel: enemyProfile.level,
+    enemyEnchant: enemyProfile.enchant,
+    enemyMoves: enemyProfile.moves,
     enemyHp: enemyStats.maxHp,
     enemyMaxHp: enemyStats.maxHp,
     enemyAttack: enemyStats.attack,
@@ -2076,8 +2300,9 @@ function createBattle(card, modeId = state.selectedBattleMode) {
     playerMaxHp: stats.maxHp,
     playerAttack: stats.attack,
     shield: 0,
+    enemyShield: 0,
     rewardGold: Math.floor(rewardBase * mode.rewardMultiplier),
-    rewardXp: Math.floor((5 + level * 2 + enemyRank) * mode.rewardMultiplier),
+    rewardXp: Math.floor((5 + level * 2 + enemyRank + Math.floor(enemyProfile.level / 3)) * mode.rewardMultiplier),
     bonusGold: 0,
     bonusXp: 0,
     outcome: null,
@@ -2152,6 +2377,30 @@ function finishBattle(won) {
   saveState();
 }
 
+function applyEnemyBattleTurn(battle, enemyCard) {
+  const moves = enemyMovesForBattle(battle, enemyCard);
+  const move = moves[Math.floor(Math.random() * moves.length)] || { name: "Golpe", damage: 1 };
+  const variance = 0.9 + Math.random() * 0.2;
+  let damage = Math.max(1, Math.floor(battle.enemyAttack * Number(move.damage || 1) * variance));
+  if (move.execute && battle.playerHp <= battle.playerMaxHp * 0.5) {
+    damage = Math.floor(damage * 1.75);
+  }
+
+  const blocked = Math.min(Number(battle.shield || 0), damage);
+  const dealt = Math.max(0, damage - blocked);
+  battle.shield = Math.max(0, Number(battle.shield || 0) - blocked);
+  battle.playerHp = Math.max(0, battle.playerHp - dealt);
+
+  if (move.shield) {
+    battle.enemyShield = Math.max(0, Number(battle.enemyShield || 0) + Math.floor(battle.enemyAttack * move.shield));
+  }
+  if (move.heal) {
+    battle.enemyHp = Math.min(battle.enemyMaxHp, battle.enemyHp + Math.floor(battle.enemyAttack * move.heal));
+  }
+
+  battle.log.unshift(`${battle.enemyName}: ${move.name} causa ${dealt}${blocked ? ` (${blocked} bloqueado)` : ""}.`);
+}
+
 function useBattleMove(moveId) {
   const battle = state.battle;
   if (!battle || battle.outcome) {
@@ -2159,7 +2408,8 @@ function useBattleMove(moveId) {
   }
 
   const card = cardById(battle.cardId);
-  if (!card) {
+  const enemyCard = battle.enemyCardId ? cardById(battle.enemyCardId) : null;
+  if (!card || !enemyCard) {
     state.battle = null;
     renderBattle();
     saveState();
@@ -2178,7 +2428,10 @@ function useBattleMove(moveId) {
     damage = Math.floor(damage * 1.75);
   }
 
-  battle.enemyHp = Math.max(0, battle.enemyHp - damage);
+  const blocked = Math.min(Number(battle.enemyShield || 0), damage);
+  const dealt = Math.max(0, damage - blocked);
+  battle.enemyShield = Math.max(0, Number(battle.enemyShield || 0) - blocked);
+  battle.enemyHp = Math.max(0, battle.enemyHp - dealt);
   if (move.shield) {
     battle.shield += Math.floor(battle.playerAttack * move.shield);
   }
@@ -2192,7 +2445,7 @@ function useBattleMove(moveId) {
     battle.bonusXp += move.xpBonus;
   }
 
-  battle.log.unshift(`${card.name}: ${move.name} causa ${damage}.`);
+  battle.log.unshift(`${card.name}: ${move.name} causa ${dealt}${blocked ? ` (${blocked} bloqueado)` : ""}.`);
   playSound("pull", { rarityId: card.rarity, delay: 0.02 });
 
   if (battle.enemyHp <= 0) {
@@ -2200,13 +2453,7 @@ function useBattleMove(moveId) {
     return;
   }
 
-  const enemyDamageBase = Math.floor(battle.enemyAttack * (0.85 + Math.random() * 0.28));
-  const blocked = Math.min(battle.shield, enemyDamageBase);
-  const enemyDamage = Math.max(0, enemyDamageBase - blocked);
-  battle.shield = Math.max(0, battle.shield - blocked);
-  battle.playerHp = Math.max(0, battle.playerHp - enemyDamage);
-  battle.log.unshift(`${battle.enemyName} golpea por ${enemyDamage}${blocked ? ` (${blocked} bloqueado)` : ""}.`);
-
+  applyEnemyBattleTurn(battle, enemyCard);
   if (battle.playerHp <= 0) {
     finishBattle(false);
     return;
@@ -2231,7 +2478,8 @@ function startExpedition(expeditionId) {
     startedAt: Date.now(),
     duration: expeditionDuration(expedition, card.id) * 1000,
     rewardGold: expeditionRewardGold(expedition, card.id),
-    rewardXp: expeditionRewardXp(expedition, card.id)
+    rewardXp: expeditionRewardXp(expedition, card.id),
+    rewardMaterials: expeditionRewardMaterials(expedition, card.id)
   };
   renderExpeditions();
   saveState();
@@ -2247,7 +2495,9 @@ function claimExpedition(expeditionId) {
   unlockAudio();
   const rewardGold = Math.max(0, Math.floor(Number(active.rewardGold || 0)));
   const rewardXp = Math.max(0, Math.floor(Number(active.rewardXp || expedition.xp)));
+  const rewardMaterials = normalizeEnchantEssence(active.rewardMaterials ?? expeditionRewardMaterials(expedition, active.cardId));
   state.gold += rewardGold;
+  state.enchantEssence = enchantEssenceCount() + rewardMaterials;
 
   const assignedCard = active.cardId ? cardById(active.cardId) : null;
   if (assignedCard && state.owned[assignedCard.id]) {
@@ -2279,6 +2529,7 @@ function claimExpedition(expeditionId) {
     cardId: assignedCard?.id || null,
     rewardGold,
     rewardXp,
+    rewardMaterials,
     role: expedition.role,
     time: Date.now()
   });
@@ -2408,6 +2659,7 @@ function applyPendingPull(finalCardId, pending) {
     uniqueUnlocked: Boolean(pending.uniqueUnlocked),
     unlockedExpeditions,
     batchCount: Math.max(1, Number(pending.batchCount || 1)),
+    results: Array.isArray(pending.results) ? pending.results.map((result) => result.cardId) : [finalCardId],
     time: Date.now()
   };
 
@@ -2647,25 +2899,27 @@ function enchantSelected() {
   }
 
   const cost = enchantCost(state.selectedCardId);
-  if (state.gold < cost) {
+  const materialCost = enchantMaterialCost(entry);
+  if (state.gold < cost || enchantEssenceCount() < materialCost) {
+    return;
+  }
+
+  const material = rollEnchantMaterial(currentLevel);
+  if (!material) {
     return;
   }
 
   unlockAudio();
-
-  const rolledMaterial = rollEnchantMaterial();
-  const rolledLevel = enchantMaterialLevel(rolledMaterial);
-  const upgraded = rolledLevel > currentLevel;
-
   state.gold -= cost;
-  entry.enchant = rolledLevel;
+  state.enchantEssence = enchantEssenceCount() - materialCost;
+  entry.enchant = enchantMaterialLevel(material);
 
-  playSound(upgraded ? "enchantSuccess" : "enchantFail");
+  playSound("enchantSuccess");
 
   enchantEffect = {
     cardId: state.selectedCardId,
-    materialId: rolledMaterial.id,
-    upgraded,
+    materialId: material.id,
+    upgraded: true,
     until: Date.now() + 900
   };
   const activeEffect = enchantEffect;
@@ -2696,18 +2950,21 @@ function resetGame() {
 }
 
 function createCardElement(card, options = {}) {
-  const entry = state.owned[card.id] || { copies: 0, xp: 0, enchant: 0 };
+  const isVirtual = Boolean(options.virtualEntry);
+  const entry = options.virtualEntry || state.owned[card.id] || { copies: 0, xp: 0, enchant: 0 };
   const preview = Boolean(options.preview);
   const lockedPreview = Boolean(options.locked && !options.roulette);
   const rarity = rarityById(card.rarity);
   const role = cardRole(card);
-  const level = cardLevel(entry);
+  const level = isVirtual
+    ? Math.max(1, Math.floor(Number(options.virtualLevel || 1)))
+    : cardLevel(entry);
   const xpProgress = cardXpProgress(entry);
   const isRoulettePreview = Boolean(options.roulette && preview && !options.reveal);
-  const unlocked = !lockedPreview && (preview || level > 0 || options.reveal || isRoulettePreview);
+  const unlocked = !lockedPreview && (preview || level > 0 || options.reveal || isRoulettePreview || isVirtual);
   const material = lockedPreview || isRoulettePreview || preview ? baseEnchantMaterial : currentEnchantMaterial(entry);
   const isEnchanted = !preview && !isRoulettePreview && !lockedPreview && unlocked && enchantLevel(entry) > 0;
-  const hasUnique = !preview && !isRoulettePreview && !lockedPreview && cardUniqueUnlocked(card.id);
+  const hasUnique = !isVirtual && !preview && !isRoulettePreview && !lockedPreview && cardUniqueUnlocked(card.id);
   const isFlashing = unlocked && enchantEffect?.cardId === card.id && Date.now() < enchantEffect.until;
   const effectMaterial = isFlashing ? enchantMaterialById(enchantEffect.materialId) : material;
   const shell = document.createElement("article");
@@ -2722,13 +2979,13 @@ function createCardElement(card, options = {}) {
   }
   const displayedName = showActualCardName ? card.name : "Carta oculta";
   const displayedRarity = showActualCardName ? `${rarity.name} - ${role.name}` : "???";
-  const displayedIncome = options.roulette ? "Girando" : (preview ? "Girando" : (unlocked ? `${formatNumber(cardIncome(card))}/s` : "???"));
+  const displayedIncome = options.roulette ? "Girando" : (preview ? "Girando" : (isVirtual ? "Sin XP" : (unlocked ? `${formatNumber(cardIncome(card))}/s` : "???")));
   const copyText = options.roulette ? "??" : (unlocked ? `Nv.${level}` : "Nv.0");
   const enchantText = options.roulette ? "???" : (unlocked ? `${material.short} x${formatMultiplier(material.multiplier)}` : "???");
-  const xpText = options.roulette ? "Ruleta" : (unlocked
+  const xpText = isVirtual ? "Sin XP" : (options.roulette ? "Ruleta" : (unlocked
     ? (xpProgress.isMax ? "XP max" : `${xpProgress.current}/${xpProgress.required} XP`)
-    : `0/${xpRequiredForLevel(1)} XP`);
-  const xpPercent = options.roulette ? 100 : xpProgress.percent;
+    : `0/${xpRequiredForLevel(1)} XP`));
+  const xpPercent = isVirtual ? 0 : (options.roulette ? 100 : xpProgress.percent);
 
   shell.innerHTML = `
     <span class="enchant-glint" aria-hidden="true"></span>
@@ -2982,6 +3239,75 @@ function renderLastCard() {
   elements.lastCardText.textContent = revealSummary(card, rarity, entry, xpProgress, material);
 }
 
+function renderBatchResults() {
+  if (!elements.batchResultsPanel || !elements.batchResultsGrid || !elements.batchResultsSummary) {
+    return;
+  }
+
+  const reveal = state.lastReveal;
+  const results = Array.isArray(reveal?.results) ? reveal.results : [];
+  if (!reveal || reveal.batchCount <= 1 || results.length <= 1) {
+    elements.batchResultsPanel.hidden = true;
+    elements.batchResultsGrid.innerHTML = "";
+    return;
+  }
+
+  const counts = new Map();
+  for (const cardId of results) {
+    if (cardById(cardId)) {
+      counts.set(cardId, (counts.get(cardId) || 0) + 1);
+    }
+  }
+
+  const rankedCards = [...counts.entries()].sort(([firstId], [secondId]) => {
+    const firstCard = cardById(firstId);
+    const secondCard = cardById(secondId);
+    const rarityDifference = rarityRankById(secondCard.rarity) - rarityRankById(firstCard.rarity);
+    return rarityDifference || firstCard.name.localeCompare(secondCard.name, "es");
+  });
+
+  elements.batchResultsPanel.hidden = false;
+  elements.batchResultsSummary.textContent = `${results.length} cartas obtenidas · ${counts.size} distintas. Las repetidas se agrupan con su cantidad.`;
+  elements.batchResultsGrid.innerHTML = "";
+
+  for (const [cardId, amount] of rankedCards) {
+    const card = cardById(cardId);
+    const tile = document.createElement("article");
+    tile.className = "batch-result-tile";
+    tile.setAttribute("aria-label", `${card.name}: ${amount} ${amount === 1 ? "copia" : "copias"}`);
+    tile.appendChild(createCardElement(card, { mini: true, reveal: true }));
+
+    const count = document.createElement("span");
+    count.className = "batch-result-count";
+    count.textContent = `×${amount}`;
+    count.setAttribute("aria-hidden", "true");
+    tile.appendChild(count);
+    elements.batchResultsGrid.appendChild(tile);
+  }
+}
+
+function renderEnchantMaterials(selected = null) {
+  if (!elements.materialInventory) {
+    return;
+  }
+
+  const entry = selected ? state.owned[selected.id] : null;
+  const required = entry && cardLevel(entry) > 0 ? enchantMaterialCost(entry) : 0;
+  const available = enchantEssenceCount();
+  elements.materialInventory.innerHTML = `
+    <div class="material-inventory-heading">
+      <strong>Materiales de expedición</strong>
+      <span>Recompensa de expediciones</span>
+    </div>
+    <div class="material-inventory-summary">
+      <strong>${formatMaterialRewards(available)}</strong>
+      <p>${required > 0
+        ? `El próximo encantamiento cuesta ${formatMaterialRewards(required)}. El resultado es aleatorio.`
+        : "Envía cartas a expediciones para conseguir materiales."}</p>
+    </div>
+  `;
+}
+
 function renderSelected() {
   elements.selectedCardSlot.innerHTML = "";
   elements.selectedDetails.innerHTML = "";
@@ -2994,6 +3320,7 @@ function renderSelected() {
     empty.className = "empty-state";
     empty.textContent = "Selecciona una carta descubierta.";
     elements.selectedCardSlot.appendChild(empty);
+    renderEnchantMaterials();
     elements.enchantButton.textContent = "Encantar";
     elements.enchantButton.disabled = true;
     return;
@@ -3024,7 +3351,7 @@ function renderSelected() {
     ["XP", xpProgress.isMax ? "Maximo" : `${xpProgress.current}/${xpProgress.required}`],
     ["Mineral", `${currentMaterial.name} x${formatMultiplier(currentMaterial.multiplier)}`],
     ["Produccion", `${formatNumber(cardIncome(selected))}/s`],
-    ["Tirada", activeRoll ? `${activeRoll.name} ${enchantEffect.upgraded ? "aplicado" : "sin mejora"}` : `Aleatoria, diamante ${diamondChance()}%`],
+    ["Resultado del próximo encantamiento", activeRoll ? `${activeRoll.name} x${formatMultiplier(activeRoll.multiplier)}` : "Aleatorio"],
     ["Mejor posible", `${formatNumber(bestIncome)}/s`],
     ["Costo por rareza", atMax ? "Maximo" : money(cost)]
   ];
@@ -3078,8 +3405,13 @@ function renderSelected() {
     skipPendingMove(selected.id, event.currentTarget.dataset.newMove);
   });
 
-  elements.enchantButton.textContent = atMax ? "Diamante alcanzado" : `Encantar aleatorio (${money(cost)})`;
-  elements.enchantButton.disabled = atMax || state.gold < cost;
+  renderEnchantMaterials(selected);
+  const materialsRequired = enchantMaterialCost(owned);
+  const hasMaterials = enchantEssenceCount() >= materialsRequired;
+  elements.enchantButton.textContent = atMax
+    ? "Diamante alcanzado"
+    : `Encantar (${money(cost)} + ${formatMaterialRewards(materialsRequired)})`;
+  elements.enchantButton.disabled = atMax || state.gold < cost || !hasMaterials;
 }
 
 function renderBattleModes() {
@@ -3123,6 +3455,42 @@ function renderBattleModes() {
       saveState();
     });
     elements.battleModeList.appendChild(button);
+  }
+}
+
+function renderBattleCardList() {
+  if (!elements.battleCardList) {
+    return;
+  }
+
+  const availableCards = cards.filter((card) => cardLevel(state.owned[card.id]) > 0);
+  const lockedByActiveBattle = Boolean(state.battle && !state.battle.outcome);
+  elements.battleCardList.innerHTML = "";
+
+  if (!availableCards.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state battle-roster-empty";
+    empty.textContent = "Consigue una carta en el gacha para entrar a la arena.";
+    elements.battleCardList.appendChild(empty);
+    return;
+  }
+
+  for (const card of availableCards) {
+    const selected = state.selectedCardId === card.id;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `battle-card-choice ${selected ? "active" : ""}`;
+    button.disabled = lockedByActiveBattle;
+    button.setAttribute("aria-pressed", String(selected));
+    button.appendChild(createCardElement(card, { mini: true, reveal: true }));
+    button.addEventListener("click", () => {
+      state.selectedCardId = card.id;
+      unlockAudio();
+      playSound("ui");
+      renderAll();
+      saveState();
+    });
+    elements.battleCardList.appendChild(button);
   }
 }
 
@@ -3184,11 +3552,19 @@ function renderBattle() {
   let enemyCard = battle.enemyCardId ? cardById(battle.enemyCardId) : null;
   if (!enemyCard) {
     enemyCard = randomEnemyCardForMode(mode, card);
+    const profile = enemyProfileForMode(enemyCard, mode);
     battle.enemyCardId = enemyCard.id;
     battle.enemyName = enemyCard.name;
+    battle.enemyLevel = profile.level;
+    battle.enemyEnchant = profile.enchant;
+    battle.enemyMoves = profile.moves;
   }
   const enemyRole = enemyCard ? cardRole(enemyCard) : roleById("attack");
   const enemyName = enemyCard?.name || battle.enemyName || "Carta rival";
+  const enemyLevel = Math.max(1, Math.floor(Number(battle.enemyLevel || 1)));
+  const enemyEnchant = Math.max(0, Math.min(enchantMaterials.length, Math.floor(Number(battle.enemyEnchant || 0))));
+  const enemyMaterial = enemyEnchant > 0 ? enchantMaterials[enemyEnchant - 1] : baseEnchantMaterial;
+  const enemyMoves = enemyCard ? enemyMovesForBattle(battle, enemyCard) : [];
   const playerPercent = battle.playerMaxHp > 0 ? Math.max(0, Math.min(100, (battle.playerHp / battle.playerMaxHp) * 100)) : 0;
   const enemyPercent = battle.enemyMaxHp > 0 ? Math.max(0, Math.min(100, (battle.enemyHp / battle.enemyMaxHp) * 100)) : 0;
   const outcomeText = battle.outcome === "won"
@@ -3233,8 +3609,12 @@ function renderBattle() {
             <span style="width: ${enemyPercent}%"></span>
             <em>${Math.ceil(battle.enemyHp)}/${battle.enemyMaxHp}</em>
           </div>
-          <small>${battle.enemyAttack} ataque</small>
+          <small>Nv.${enemyLevel} / ${enemyMaterial.name} / ${battle.enemyAttack} ataque${battle.enemyShield ? ` / ${battle.enemyShield} escudo` : ""}</small>
         </div>
+      </div>
+      <div class="enemy-move-summary">
+        <strong>Habilidades rivales</strong>
+        <span>${enemyMoves.map((move) => move.name).join(" / ") || "Golpe"} <em>Sin XP</em></span>
       </div>
       <div class="battle-moves">
         ${moves.map((move) => `
@@ -3259,7 +3639,9 @@ function renderBattle() {
   if (enemyCard) {
     elements.battleArena.querySelector(".enemy-card-preview")?.appendChild(createCardElement(enemyCard, {
       mini: true,
-      reveal: true
+      reveal: true,
+      virtualEntry: { enchant: enemyEnchant },
+      virtualLevel: enemyLevel
     }));
   }
 
@@ -3311,6 +3693,7 @@ function renderExpeditions() {
             : "Disponible";
     const rewardGold = active ? active.rewardGold : expeditionRewardGold(expedition);
     const rewardXp = active ? active.rewardXp : expeditionRewardXp(expedition);
+    const rewardMaterials = active?.rewardMaterials || expeditionRewardMaterials(expedition, assignedCard?.id);
     const duration = active ? Math.ceil(active.duration / 1000) : expeditionDuration(expedition, selectedCard?.id);
     const buttonText = !unlocked
       ? "Bloqueada"
@@ -3332,6 +3715,7 @@ function renderExpeditions() {
         <span>${money(rewardGold)}</span>
         <span>+${rewardXp} XP carta</span>
       </div>
+      <div class="expedition-materials">Materiales: ${formatMaterialRewards(rewardMaterials)}</div>
       <div class="expedition-meta">
         <span>Poder ${formatNumber(power)}/${expedition.recommendedPower}</span>
         <span>${role.name}</span>
@@ -3431,6 +3815,118 @@ function renderLog() {
   }
 }
 
+const tutorialSteps = [
+  {
+    title: "¡Bienvenido a Gacha!",
+    text: "Tu objetivo es reunir cartas, hacerlas crecer y mejorar su producción. Esta guía rápida te muestra cómo funcionan las partes principales; puedes saltarla cuando quieras."
+  },
+  {
+    title: "1. Gacha: consigue cartas",
+    text: "Gasta oro para abrir sobres. Cada sobre muestra sus probabilidades: los sobres más caros dan mejores posibilidades de conseguir rarezas altas. Las cartas repetidas también suman XP y niveles."
+  },
+  {
+    title: "2. Tus estadísticas",
+    text: "El oro es tu moneda para abrir sobres y pagar encantamientos. Por segundo indica cuánto oro producen tus cartas automáticamente; Niveles resume el progreso de tu colección y ayuda a desbloquear contenido."
+  },
+  {
+    title: "3. Encantamientos aleatorios",
+    text: "Selecciona una carta descubierta en la colección y podrás encantarla. Cada intento consume oro y materiales de expedición; cada vez cuesta más. El mineral que sale es aleatorio, y uno mejor aumenta más la producción. No eliges ni gastas un mineral específico."
+  },
+  {
+    title: "4. Expediciones: consigue materiales",
+    text: "Envía una carta disponible a una expedición y vuelve cuando termine para reclamar la recompensa. Obtendrás oro, XP para esa carta y materiales que se acumulan en una reserva común para encantar. Las expediciones más avanzadas dan más."
+  },
+  {
+    title: "5. Combate: pon a prueba tus cartas",
+    text: "El modo Combate reemplaza la pantalla del gacha por la arena. Elige una carta y una dificultad; si ganas, recibes recompensas. Usa el botón de arriba o «Volver al juego» para cambiar entre combate y gacha."
+  }
+];
+
+let tutorialStepIndex = 0;
+let tutorialPreviousView = "game";
+
+function renderTutorialStep() {
+  const step = tutorialSteps[tutorialStepIndex];
+  if (!step || !elements.tutorialOverlay) {
+    return;
+  }
+
+  if (tutorialStepIndex === tutorialSteps.length - 1 && state.activeView !== "battle") {
+    state.activeView = "battle";
+    renderActiveView();
+  } else if (tutorialStepIndex < tutorialSteps.length - 1 && state.activeView !== tutorialPreviousView) {
+    state.activeView = tutorialPreviousView;
+    renderActiveView();
+  }
+
+  elements.tutorialTitle.textContent = step.title;
+  elements.tutorialText.textContent = step.text;
+  elements.tutorialStepCount.textContent = `${tutorialStepIndex + 1} / ${tutorialSteps.length}`;
+  elements.tutorialProgress.style.width = `${((tutorialStepIndex + 1) / tutorialSteps.length) * 100}%`;
+  elements.tutorialBack.disabled = tutorialStepIndex === 0;
+  elements.tutorialNext.textContent = tutorialStepIndex === tutorialSteps.length - 1 ? "¡Empezar a jugar!" : "Siguiente";
+}
+
+function closeTutorial() {
+  if (!elements.tutorialOverlay) {
+    return;
+  }
+
+  elements.tutorialOverlay.hidden = true;
+  state.activeView = tutorialPreviousView;
+  renderActiveView();
+  try {
+    writeStoredValue(TUTORIAL_KEY, "completed");
+  } catch (error) {
+    // El tutorial queda cerrado durante esta sesión aunque el almacenamiento no esté disponible.
+  }
+  saveState();
+}
+
+function startTutorialIfNeeded() {
+  if (!elements.tutorialOverlay) {
+    return;
+  }
+
+  try {
+    if (readStoredValue(TUTORIAL_KEY) === "completed") {
+      return;
+    }
+  } catch (error) {
+    // Si no hay almacenamiento, se muestra el tutorial en cada sesión.
+  }
+
+  tutorialStepIndex = 0;
+  tutorialPreviousView = state.activeView;
+  elements.tutorialOverlay.hidden = false;
+  renderTutorialStep();
+  elements.tutorialNext.focus();
+}
+
+function renderActiveView() {
+  const inBattle = state.activeView === "battle";
+  if (elements.gameView) {
+    elements.gameView.hidden = inBattle;
+  }
+  if (elements.combatView) {
+    elements.combatView.hidden = !inBattle;
+  }
+  if (elements.battleViewButton) {
+    elements.battleViewButton.classList.toggle("active", inBattle);
+    elements.battleViewButton.setAttribute("aria-pressed", String(inBattle));
+    elements.battleViewButton.textContent = inBattle ? "Volver al Gacha" : "Modo Combate";
+    elements.battleViewButton.setAttribute("aria-label", inBattle ? "Volver al gacha" : "Abrir modo combate");
+  }
+}
+
+function switchView(view) {
+  state.activeView = view === "battle" ? "battle" : "game";
+  renderActiveView();
+  renderAll();
+  saveState();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function renderAll() {
   renderStats();
   renderSoundButton();
@@ -3439,11 +3935,14 @@ function renderAll() {
   renderFilters();
   renderCollection();
   renderLastCard();
+  renderBatchResults();
   renderSelected();
+  renderBattleCardList();
   renderBattleModes();
   renderBattle();
   renderExpeditions();
   renderLog();
+  renderActiveView();
 }
 
 function tick() {
@@ -3456,19 +3955,39 @@ function tick() {
     state.gold += income * delta;
   }
 
-  saveTimer += delta;
   renderStats();
   renderGachas();
   renderSelected();
   renderExpeditions();
-
-  if (saveTimer >= 2) {
-    saveTimer = 0;
-    saveState();
-  }
 }
 
 elements.enchantButton.addEventListener("click", enchantSelected);
+elements.tutorialBack?.addEventListener("click", () => {
+  if (tutorialStepIndex > 0) {
+    tutorialStepIndex -= 1;
+    renderTutorialStep();
+  }
+});
+elements.tutorialNext?.addEventListener("click", () => {
+  if (tutorialStepIndex >= tutorialSteps.length - 1) {
+    closeTutorial();
+    return;
+  }
+  tutorialStepIndex += 1;
+  renderTutorialStep();
+});
+elements.tutorialSkip?.addEventListener("click", closeTutorial);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && elements.tutorialOverlay && !elements.tutorialOverlay.hidden) {
+    closeTutorial();
+  }
+});
+if (elements.battleViewButton) {
+  elements.battleViewButton.addEventListener("click", () => switchView(state.activeView === "battle" ? "game" : "battle"));
+}
+if (elements.gameViewButton) {
+  elements.gameViewButton.addEventListener("click", () => switchView("game"));
+}
 if (elements.soundButton) {
   elements.soundButton.addEventListener("click", toggleSound);
 }
@@ -3485,7 +4004,7 @@ if (elements.musicVolume) {
 if (elements.playMusicButton) {
   elements.playMusicButton.addEventListener('click', async () => {
     musicEnabled = true;
-    localStorage.setItem(MUSIC_KEY, "on");
+    writeStoredValue(MUSIC_KEY, "on");
     renderMusicButton();
     const knownFiles = fileMusicList.length ? fileMusicList : DEFAULT_MUSIC_FILES;
     let started = knownFiles.length ? await startMusicPlayback(knownFiles) : false;
@@ -3500,8 +4019,20 @@ if (elements.playMusicButton) {
   updatePlayMusicButton();
 }
 elements.resetButton.addEventListener("click", resetGame);
+elements.saveFileButton?.addEventListener("click", () => {
+  try {
+    downloadSaveFile();
+  } catch (error) {
+    window.alert(`No se pudo guardar el archivo: ${error.message || "error inesperado"}`);
+  }
+});
+elements.loadFileButton?.addEventListener("click", () => elements.saveFileInput?.click());
+elements.saveFileInput?.addEventListener("change", (event) => {
+  void loadSaveFile(event.currentTarget.files?.[0]);
+});
 
 renderAll();
+startTutorialIfNeeded();
 setInterval(tick, 500);
 // Double-clicking on card art toggles image fit mode (contain <-> cover)
 document.addEventListener('dblclick', (e) => {

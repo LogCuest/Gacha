@@ -17,7 +17,7 @@
         </div>
         <div>
           <h1>Gacha</h1>
-          <p>Gacha, oro pasivo y encantamientos</p>
+          <p>Gacha, oro pasivo y encantamientos · Guardado manual por archivo</p>
         </div>
       </div>
 
@@ -37,6 +37,10 @@
       </div>
 
       <div class="top-actions">
+        <button class="combat-nav-button" id="battleViewButton" type="button" aria-controls="combatView">Modo Combate</button>
+        <button class="file-action-button" id="saveFileButton" type="button" title="Descargar una copia de la partida">Guardar archivo</button>
+        <button class="file-action-button" id="loadFileButton" type="button" title="Cargar una partida desde un archivo">Cargar archivo</button>
+        <input id="saveFileInput" class="visually-hidden-input" type="file" accept=".json,application/json" aria-label="Seleccionar archivo de partida" />
         <button class="icon-button" id="soundButton" type="button" title="Activar sonido" aria-label="Activar sonido">
           <span aria-hidden="true">S</span>
         </button>
@@ -53,7 +57,7 @@
       </div>
     </header>
 
-    <main class="game-layout">
+    <main class="game-layout" id="gameView">
       <section class="panel shop-panel" aria-labelledby="gachaTitle">
         <div class="panel-heading">
           <div>
@@ -74,6 +78,16 @@
           <div class="showcase-card" id="lastCardSlot"></div>
         </section>
 
+        <section class="panel batch-results-panel" id="batchResultsPanel" aria-labelledby="batchResultsTitle" hidden>
+          <div class="panel-heading">
+            <div>
+              <h2 id="batchResultsTitle">Resultados de las tiradas</h2>
+              <p id="batchResultsSummary"></p>
+            </div>
+          </div>
+          <div class="batch-results-grid" id="batchResultsGrid"></div>
+        </section>
+
         <section class="panel collection-panel" aria-labelledby="collectionTitle">
           <div class="panel-heading collection-heading">
             <div>
@@ -85,18 +99,6 @@
           <div class="collection-grid" id="collectionGrid"></div>
         </section>
 
-        <section class="panel battle-panel independent-battle-panel" aria-labelledby="battleTitle">
-          <div class="panel-heading battle-heading">
-            <div>
-              <h2 id="battleTitle">Arena de combate</h2>
-              <p>Elige un modo y pelea contra otras cartas.</p>
-            </div>
-          </div>
-          <div class="battle-interface">
-            <div class="battle-mode-list" id="battleModeList"></div>
-            <div class="battle-arena" id="battleArena"></div>
-          </div>
-        </section>
       </section>
 
       <aside class="side-column">
@@ -110,6 +112,7 @@
 
           <div class="selected-card" id="selectedCardSlot"></div>
           <div class="detail-list" id="selectedDetails"></div>
+          <div class="material-inventory" id="materialInventory" aria-label="Materiales de encantamiento"></div>
           <button class="primary-action" id="enchantButton" type="button">Encantar</button>
         </section>
 
@@ -131,6 +134,55 @@
         </section>
       </aside>
     </main>
+
+    <section class="combat-view" id="combatView" aria-labelledby="battleTitle" hidden>
+      <div class="combat-view-heading">
+        <div>
+          <span class="eyebrow">Modo Combate</span>
+          <h2 id="battleTitle">Arena de combate</h2>
+          <p>Elige tu carta, una dificultad y enfrentate a rivales con nivel y encantamiento propios.</p>
+        </div>
+        <button class="secondary-action" id="gameViewButton" type="button">Volver al juego</button>
+      </div>
+
+      <div class="combat-layout">
+        <section class="panel combat-roster-panel" aria-labelledby="battleRosterTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h2 id="battleRosterTitle">Tu equipo</h2>
+              <p>Selecciona una carta para luchar.</p>
+            </div>
+          </div>
+          <div class="battle-card-list" id="battleCardList"></div>
+        </section>
+
+        <section class="panel battle-panel independent-battle-panel">
+          <div class="battle-interface">
+            <div class="battle-mode-list" id="battleModeList"></div>
+            <div class="battle-arena" id="battleArena"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <div class="tutorial-overlay" id="tutorialOverlay" hidden>
+    <section class="tutorial-dialog" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle" aria-describedby="tutorialText">
+      <div class="tutorial-progress-row">
+        <span class="tutorial-kicker">GUIA PARA EMPEZAR</span>
+        <span id="tutorialStepCount">1 / 6</span>
+      </div>
+      <div class="tutorial-progress-track" aria-hidden="true"><span id="tutorialProgress"></span></div>
+      <h2 id="tutorialTitle">¡Bienvenido a Gacha!</h2>
+      <p id="tutorialText"></p>
+      <div class="tutorial-actions">
+        <button class="tutorial-skip" id="tutorialSkip" type="button">Saltar tutorial</button>
+        <div>
+          <button class="tutorial-back" id="tutorialBack" type="button">Anterior</button>
+          <button class="tutorial-next" id="tutorialNext" type="button">Siguiente</button>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
