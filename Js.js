@@ -10,6 +10,9 @@ const DEFAULT_MUSIC_FILES = [
 ];
 const MAX_CARD_LEVEL = 20;
 const MAX_ACTIVE_MOVES = 4;
+const REINCARNATION_BASE_LEVEL_REQUIREMENT = 100;
+const REINCARNATION_LEVEL_STEP = 100;
+const REINCARNATION_GOLD_BONUS = 0.1;
 const XP_PER_CARD_PULL = 5;
 const BASE_CARD_XP_REQUIRED = 50;
 const CARD_XP_GROWTH = 1.3;
@@ -545,6 +548,13 @@ const expeditions = [
   }
 ];
 
+const missions = [
+  { id: "pulls", name: "Abrir sobres", description: "Realiza tiradas de gacha.", baseTarget: 5, targetStep: 2, baseGold: 220, difficulty: 1 },
+  { id: "battles", name: "Ganar combates", description: "Gana combates en la arena.", baseTarget: 1, targetStep: 1, baseGold: 300, difficulty: 2 },
+  { id: "expeditions", name: "Completar expediciones", description: "Reclama recompensas de expediciones.", baseTarget: 1, targetStep: 0.5, baseGold: 350, difficulty: 3 },
+  { id: "enchants", name: "Encantar cartas", description: "Mejora cartas con encantamientos.", baseTarget: 2, targetStep: 1, baseGold: 260, difficulty: 2 }
+];
+
 function normalizeEnchantEssence(value) {
   return Math.max(0, Math.floor(Number(value || 0)));
 }
@@ -566,8 +576,12 @@ const initialState = {
   lastReveal: null,
   log: [],
   expeditions: {},
+  missionProgress: {},
+  missionCooldowns: {},
   battle: null,
   selectedBattleMode: "training",
+  reincarnations: 0,
+  reincarnationNotified: false,
   activeView: "game",
   filter: "all",
   lastSavedAt: Date.now()
@@ -584,8 +598,12 @@ function createInitialState() {
     lastReveal: null,
     log: [],
     expeditions: {},
+    missionProgress: {},
+    missionCooldowns: {},
     battle: null,
     selectedBattleMode: "training",
+    reincarnations: 0,
+    reincarnationNotified: false,
     activeView: "game",
     filter: "all",
     lastSavedAt: Date.now()
@@ -691,6 +709,7 @@ const elements = {
   battleArena: document.querySelector("#battleArena"),
   pullLog: document.querySelector("#pullLog"),
   expeditionList: document.querySelector("#expeditionList"),
+  missionList: document.querySelector("#missionList"),
   toastStack: document.querySelector("#toastStack"),
   tutorialOverlay: document.querySelector("#tutorialOverlay"),
   tutorialTitle: document.querySelector("#tutorialTitle"),
@@ -700,10 +719,17 @@ const elements = {
   tutorialBack: document.querySelector("#tutorialBack"),
   tutorialNext: document.querySelector("#tutorialNext"),
   tutorialSkip: document.querySelector("#tutorialSkip"),
+  reincarnationOverlay: document.querySelector("#reincarnationOverlay"),
+  reincarnationDialogText: document.querySelector("#reincarnationDialogText"),
+  reincarnationLater: document.querySelector("#reincarnationLater"),
+  reincarnationConfirm: document.querySelector("#reincarnationConfirm"),
   soundButton: document.querySelector("#soundButton"),
   musicButton: document.querySelector("#musicButton"),
   musicVolume: document.querySelector("#musicVolume"),
   playMusicButton: document.querySelector("#playMusicButton"),
+  reincarnationValue: document.querySelector("#reincarnationValue"),
+  reincarnationProgress: document.querySelector("#reincarnationProgress"),
+  reincarnationButton: document.querySelector("#reincarnationButton"),
   resetButton: document.querySelector("#resetButton"),
   saveFileButton: document.querySelector("#saveFileButton"),
   loadFileButton: document.querySelector("#loadFileButton"),
@@ -795,6 +821,10 @@ function stateFromSaveData(saved, applyOfflineProgress = true) {
     return [gacha.id, Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0];
   }));
   next.enchantEssence = normalizeEnchantEssence(saved.enchantEssence ?? legacyMaterialTotal(saved.materials));
+  next.reincarnations = Number.isFinite(Number(saved.reincarnations))
+    ? Math.max(0, Math.floor(Number(saved.reincarnations)))
+    : 0;
+  next.reincarnationNotified = saved.reincarnationNotified === true;
   next.selectedCardId = cardById(saved.selectedCardId) && cardLevel(next.owned[saved.selectedCardId]) > 0
     ? saved.selectedCardId
     : null;
@@ -829,6 +859,16 @@ function stateFromSaveData(saved, applyOfflineProgress = true) {
       rewardMaterials: normalizeEnchantEssence(entry.rewardMaterials)
     };
   }
+  const savedMissionProgress = isPlainObject(saved.missionProgress) ? saved.missionProgress : {};
+  next.missionProgress = Object.fromEntries(missions.map((mission) => {
+    const progress = Number(savedMissionProgress[mission.id] || 0);
+    return [mission.id, Number.isFinite(progress) ? Math.max(0, Math.floor(progress)) : 0];
+  }));
+  const savedMissionCooldowns = isPlainObject(saved.missionCooldowns) ? saved.missionCooldowns : {};
+  next.missionCooldowns = Object.fromEntries(missions.map((mission) => {
+    const cooldownUntil = Number(savedMissionCooldowns[mission.id] || 0);
+    return [mission.id, Number.isFinite(cooldownUntil) ? Math.max(0, cooldownUntil) : 0];
+  }));
 
   const battle = saved.battle;
   const validBattle = isPlainObject(battle)
@@ -997,6 +1037,45 @@ function showPullNotification(cardId, pullInfo = {}) {
   }
 
   window.setTimeout(() => dismissToast(toast), batchCount > 1 ? 5600 : 4300);
+}
+
+function showMissionNotification(mission) {
+  if (!elements.toastStack) {
+    return;
+  }
+
+  const toast = document.createElement("article");
+  toast.className = "pull-toast mission-toast";
+  toast.innerHTML = `
+    <div class="toast-sigil" aria-hidden="true">!</div>
+    <button class="mission-toast-main" type="button" aria-label="Mision completada: ${mission.name}. Ir a reclamar la recompensa.">
+      <span class="toast-copy">
+        <span>Mision completada</span>
+        <strong>${mission.name}</strong>
+        <p>Pulsa aqui para ir a reclamar tu recompensa.</p>
+      </span>
+    </button>
+    <button class="toast-close" type="button" aria-label="Cerrar notificacion">x</button>
+  `;
+
+  toast.querySelector(".mission-toast-main").addEventListener("click", () => {
+    state.activeView = "game";
+    renderActiveView();
+    renderMissions();
+    document.querySelector("#missionPanel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => {
+      document.querySelector(`[data-mission-id="${mission.id}"] .mission-action`)?.focus({ preventScroll: true });
+    }, 450);
+    dismissToast(toast);
+  });
+  toast.querySelector(".toast-close").addEventListener("click", () => dismissToast(toast));
+  elements.toastStack.prepend(toast);
+
+  while (elements.toastStack.children.length > 4) {
+    elements.toastStack.lastElementChild?.remove();
+  }
+
+  window.setTimeout(() => dismissToast(toast), 10000);
 }
 
 function getAudioContext() {
@@ -1878,7 +1957,7 @@ function pendingMoveForCard(card) {
 function replaceMove(cardId, oldMoveId, newMoveId) {
   const card = cardById(cardId);
   const entry = card ? ownedEntry(card.id) : null;
-  if (!card || !entry || !moveById(card, oldMoveId) || !moveById(card, newMoveId)) {
+  if (!card || !entry || cardInExpedition(card.id) || !moveById(card, oldMoveId) || !moveById(card, newMoveId)) {
     return;
   }
 
@@ -1900,7 +1979,7 @@ function replaceMove(cardId, oldMoveId, newMoveId) {
 function skipPendingMove(cardId, moveId) {
   const card = cardById(cardId);
   const entry = card ? ownedEntry(card.id) : null;
-  if (!card || !entry) {
+  if (!card || !entry || cardInExpedition(card.id)) {
     return;
   }
 
@@ -2017,11 +2096,48 @@ function cardIncome(card, customState = state) {
 
 function totalIncome(customState = state) {
   const baseIncome = cards.reduce((sum, card) => sum + cardIncome(card, customState), 0);
-  return baseIncome * (1 + passiveModifiers(customState).incomeBonus);
+  return baseIncome * (1 + passiveModifiers(customState).incomeBonus) * goldMultiplier(customState);
 }
 
-function totalLevels() {
-  return Object.values(state.owned).reduce((sum, entry) => sum + cardLevel(entry), 0);
+function goldMultiplier(customState = state) {
+  const reincarnations = Math.max(0, Math.floor(Number(customState.reincarnations) || 0));
+  return 1 + reincarnations * REINCARNATION_GOLD_BONUS;
+}
+
+function reincarnationLevelRequirement(customState = state) {
+  const reincarnations = Math.max(0, Math.floor(Number(customState.reincarnations) || 0));
+  return REINCARNATION_BASE_LEVEL_REQUIREMENT + reincarnations * REINCARNATION_LEVEL_STEP;
+}
+
+function totalLevels(customState = state) {
+  return Object.values(customState.owned).reduce((sum, entry) => sum + cardLevel(entry), 0);
+}
+
+function goldReward(baseReward, bonus = 0, customState = state) {
+  return Math.max(0, Math.floor(Number(baseReward || 0) * (1 + Number(bonus || 0)) * goldMultiplier(customState)));
+}
+
+function checkReincarnationAvailability() {
+  if (state.reincarnationNotified || totalLevels() < reincarnationLevelRequirement()) {
+    return;
+  }
+
+  state.reincarnationNotified = true;
+  saveState();
+  openReincarnationDialog();
+}
+
+function openReincarnationDialog() {
+  const requiredLevel = reincarnationLevelRequirement();
+  const nextMultiplier = (goldMultiplier() + REINCARNATION_GOLD_BONUS).toFixed(1);
+  elements.reincarnationDialogText.textContent = `Alcanzaste los ${requiredLevel} niveles. Si reencarnas, tu multiplicador de oro subira a ${nextMultiplier}x. Se reiniciaran el oro, las cartas, sus niveles y encantamientos, los materiales, las expediciones y las tiradas.`;
+  elements.reincarnationOverlay.hidden = false;
+  elements.reincarnationConfirm.focus();
+}
+
+function closeReincarnationDialog() {
+  elements.reincarnationOverlay.hidden = true;
+  elements.reincarnationButton.focus();
 }
 
 function discoveredCards() {
@@ -2059,11 +2175,91 @@ function cardPower(cardId, customState = state) {
 function selectedExpeditionCard() {
   const card = state.selectedCardId ? cardById(state.selectedCardId) : null;
   const entry = card ? state.owned[card.id] : null;
-  return card && cardLevel(entry) > 0 ? card : null;
+  return card && cardLevel(entry) > 0 && !cardInExpedition(card.id) ? card : null;
 }
 
 function cardInExpedition(cardId) {
   return Object.values(state.expeditions || {}).some((expeditionState) => expeditionState?.cardId === cardId);
+}
+
+function cardInActiveBattle(cardId) {
+  return Boolean(state.battle && !state.battle.outcome && state.battle.cardId === cardId);
+}
+
+function missionTarget(mission) {
+  const levelTier = Math.floor(totalLevels() / 25);
+  return Math.max(1, Math.ceil(mission.baseTarget + levelTier * mission.targetStep));
+}
+
+function missionDifficulty(mission) {
+  return mission.difficulty + Math.floor(totalLevels() / 25);
+}
+
+function missionCooldownRemaining(missionId) {
+  return Math.max(0, Number(state.missionCooldowns?.[missionId] || 0) - Date.now());
+}
+
+function updateMissionCooldownUi() {
+  elements.missionList?.querySelectorAll(".mission-card").forEach((card) => {
+    const mission = missions.find((item) => item.id === card.dataset.missionId);
+    const button = card.querySelector(".mission-action");
+    const cooldownLabel = card.querySelector(".mission-cooldown-timer");
+    if (!mission || !button || !cooldownLabel) {
+      return;
+    }
+
+    const completed = missionProgress(mission.id) >= missionTarget(mission);
+    const remaining = missionCooldownRemaining(mission.id);
+    cooldownLabel.textContent = remaining > 0
+      ? `Progreso pausado · se renueva en ${formatDuration(remaining)}.`
+      : "";
+    button.disabled = !completed || remaining > 0;
+    button.textContent = completed
+      ? remaining > 0 ? `En espera · ${formatDuration(remaining)}` : "Reclamar recompensa"
+      : "En progreso";
+  });
+}
+
+function missionProgress(missionId) {
+  return Math.max(0, Math.floor(Number(state.missionProgress?.[missionId] || 0)));
+}
+
+function addMissionProgress(missionId, amount = 1) {
+  const mission = missions.find((item) => item.id === missionId);
+  if (!mission || amount <= 0 || missionCooldownRemaining(missionId) > 0) {
+    return;
+  }
+
+  const target = missionTarget(mission);
+  const previousProgress = missionProgress(missionId);
+  const nextProgress = Math.min(target, previousProgress + Math.floor(amount));
+  state.missionProgress[missionId] = nextProgress;
+  if (previousProgress < target && nextProgress >= target) {
+    showMissionNotification(mission);
+  }
+}
+
+function claimMission(missionId) {
+  const mission = missions.find((item) => item.id === missionId);
+  if (!mission || missionCooldownRemaining(missionId) > 0) {
+    return;
+  }
+
+  const target = missionTarget(mission);
+  if (missionProgress(missionId) < target) {
+    return;
+  }
+
+  const levelTier = Math.floor(totalLevels() / 25);
+  const rewardGold = Math.floor(mission.baseGold * (1 + levelTier * 0.5));
+  const rewardMaterials = 1 + Math.floor(levelTier / 2);
+  state.gold += rewardGold;
+  state.enchantEssence = enchantEssenceCount() + rewardMaterials;
+  state.missionProgress[missionId] = 0;
+  state.missionCooldowns[missionId] = Date.now() + missionDifficulty(mission) * 60 * 1000;
+  playSound("levelUp", { delay: 0.08 });
+  renderAll();
+  saveState();
 }
 
 function expeditionUnlocked(expedition) {
@@ -2233,6 +2429,10 @@ function randomInteger(min, max) {
   return low + Math.floor(Math.random() * (high - low + 1));
 }
 
+function battleRewardMaterials(mode) {
+  return Math.max(1, Math.round(mode.rewardMultiplier));
+}
+
 function enemyProfileForMode(enemyCard, mode) {
   const [minLevel, maxLevel] = mode.enemyLevelRange || [1, 1];
   const [minEnchant, maxEnchant] = mode.enemyEnchantRange || [0, 0];
@@ -2303,6 +2503,7 @@ function createBattle(card, modeId = state.selectedBattleMode) {
     enemyShield: 0,
     rewardGold: Math.floor(rewardBase * mode.rewardMultiplier),
     rewardXp: Math.floor((5 + level * 2 + enemyRank + Math.floor(enemyProfile.level / 3)) * mode.rewardMultiplier),
+    rewardMaterials: battleRewardMaterials(mode),
     bonusGold: 0,
     bonusXp: 0,
     outcome: null,
@@ -2315,7 +2516,7 @@ function createBattle(card, modeId = state.selectedBattleMode) {
 function selectedBattleCard() {
   const card = state.selectedCardId ? cardById(state.selectedCardId) : null;
   const entry = card ? state.owned[card.id] : null;
-  return card && cardLevel(entry) > 0 ? card : null;
+  return card && cardLevel(entry) > 0 && !cardInExpedition(card.id) ? card : null;
 }
 
 function startBattle() {
@@ -2346,14 +2547,17 @@ function finishBattle(won) {
   battle.outcome = won ? "won" : "lost";
 
   if (won && card) {
-    const rewardGold = Math.floor(Number(battle.rewardGold || 0) * (1 + Number(battle.bonusGold || 0)));
+    const rewardGold = goldReward(battle.rewardGold, battle.bonusGold);
     const rewardXp = Math.floor(Number(battle.rewardXp || 0) + Number(battle.bonusXp || 0));
+    const rewardMaterials = normalizeEnchantEssence(battle.rewardMaterials ?? battleRewardMaterials(battleModeById(battle.modeId) || battleModes[0]));
     const entry = ownedEntry(card.id);
     entry.xp = Math.min(cardXp(entry) + rewardXp, maxCardXp());
     normalizeCardEntry(entry);
     const learnedMoves = syncLearnedMoves(card.id);
     state.gold += rewardGold;
-    battle.log.unshift(`Victoria: +${formatNumber(rewardGold)} oro, +${rewardXp} XP.`);
+    state.enchantEssence = enchantEssenceCount() + rewardMaterials;
+    addMissionProgress("battles");
+    battle.log.unshift(`Victoria: +${formatNumber(rewardGold)} oro, +${rewardXp} XP y +${formatMaterialRewards(rewardMaterials)}.`);
     if (learnedMoves.length) {
       const learnedNames = learnedMoves.map((moveId) => moveById(card, moveId)?.name).filter(Boolean).join(", ");
       battle.log.unshift(`${card.name} aprendio ${learnedNames}.`);
@@ -2364,6 +2568,7 @@ function finishBattle(won) {
       modeId: battle.modeId || "training",
       rewardGold,
       rewardXp,
+      rewardMaterials,
       time: Date.now()
     });
     state.log = state.log.slice(0, 8);
@@ -2467,7 +2672,7 @@ function useBattleMove(moveId) {
 function startExpedition(expeditionId) {
   const expedition = expeditionById(expeditionId);
   const card = selectedExpeditionCard();
-  if (!expedition || !card || !expeditionUnlocked(expedition) || state.expeditions[expeditionId] || cardInExpedition(card.id)) {
+  if (!expedition || !card || !expeditionUnlocked(expedition) || state.expeditions[expeditionId] || cardInExpedition(card.id) || cardInActiveBattle(card.id)) {
     return;
   }
 
@@ -2493,11 +2698,12 @@ function claimExpedition(expeditionId) {
   }
 
   unlockAudio();
-  const rewardGold = Math.max(0, Math.floor(Number(active.rewardGold || 0)));
+  const rewardGold = goldReward(active.rewardGold);
   const rewardXp = Math.max(0, Math.floor(Number(active.rewardXp || expedition.xp)));
   const rewardMaterials = normalizeEnchantEssence(active.rewardMaterials ?? expeditionRewardMaterials(expedition, active.cardId));
   state.gold += rewardGold;
   state.enchantEssence = enchantEssenceCount() + rewardMaterials;
+  addMissionProgress("expeditions");
 
   const assignedCard = active.cardId ? cardById(active.cardId) : null;
   if (assignedCard && state.owned[assignedCard.id]) {
@@ -2865,6 +3071,7 @@ function pullGacha(gachaId, count = 1) {
   for (let index = 0; index < mode.count; index += 1) {
     results.push(resolveGachaPull(gacha, weights, time + index, draftState));
   }
+  addMissionProgress("pulls", results.length);
 
   const featured = chooseFeaturedPullResult(results);
 
@@ -2884,7 +3091,7 @@ function pullGacha(gachaId, count = 1) {
 }
 
 function enchantSelected() {
-  if (!state.selectedCardId) {
+  if (!state.selectedCardId || cardInExpedition(state.selectedCardId)) {
     return;
   }
 
@@ -2913,6 +3120,7 @@ function enchantSelected() {
   state.gold -= cost;
   state.enchantEssence = enchantEssenceCount() - materialCost;
   entry.enchant = enchantMaterialLevel(material);
+  addMissionProgress("enchants");
 
   playSound("enchantSuccess");
 
@@ -2932,6 +3140,27 @@ function enchantSelected() {
       renderSelected();
     }
   }, 920);
+  saveState();
+}
+
+function reincarnate() {
+  const requiredLevel = reincarnationLevelRequirement();
+  if (totalLevels() < requiredLevel) {
+    return;
+  }
+
+  openReincarnationDialog();
+}
+
+function performReincarnation() {
+  const reincarnations = state.reincarnations + 1;
+  clearCardRoulette();
+  elements.reincarnationOverlay.hidden = true;
+  state = createInitialState();
+  state.reincarnations = reincarnations;
+  unlockAudio();
+  playSound("reset");
+  renderAll();
   saveState();
 }
 
@@ -3051,9 +3280,20 @@ function createCardElement(card, options = {}) {
 
 function renderStats() {
   const displayedGold = Math.floor(state.gold);
+  const levels = totalLevels();
+  const requiredLevel = reincarnationLevelRequirement();
+  const multiplier = goldMultiplier();
   elements.gold.textContent = money(displayedGold);
   elements.income.textContent = `${formatNumber(totalIncome())}/s`;
-  elements.cards.textContent = `${totalLevels()} nv (${discoveredCards()}/${cards.length})`;
+  elements.cards.textContent = `${levels} nv (${discoveredCards()}/${cards.length})`;
+  elements.reincarnationValue.textContent = `${multiplier.toFixed(1)}x`;
+  elements.reincarnationProgress.textContent = `${Math.min(levels, requiredLevel)} / ${requiredLevel} niveles`;
+  elements.reincarnationButton.textContent = "Reencarnar";
+  elements.reincarnationButton.hidden = levels < requiredLevel;
+  elements.reincarnationButton.title = levels < requiredLevel
+    ? `Necesitas ${requiredLevel - levels} niveles mas para reencarnar`
+    : `Reiniciar el progreso y obtener un multiplicador de oro de ${(multiplier + REINCARNATION_GOLD_BONUS).toFixed(1)}x`;
+  checkReincarnationAvailability();
 
   if (displayedGold > previousGoldValue) {
     elements.gold.classList.remove("gold-increase");
@@ -3095,9 +3335,10 @@ function renderGachas() {
       .map((mode) => {
         const modeCost = gachaCost(gacha, mode.count);
         const disabled = state.gold < modeCost ? "disabled" : "";
+        const isFirstPull = gacha.id === "paper" && (state.pulls.paper || 0) === 0 && mode.count === 1;
         const penalty = mode.count > 1 ? `<em>R+ ${Math.round(mode.rareChanceFactor * 100)}%</em>` : `<em>Normal</em>`;
         return `
-          <button class="gacha-pull ${mode.count === 1 ? "primary" : ""}" type="button" data-count="${mode.count}" ${disabled}>
+          <button class="gacha-pull ${mode.count === 1 ? "primary" : ""} ${isFirstPull ? "first-gacha-highlight" : ""}" type="button" data-count="${mode.count}" ${isFirstPull ? 'title="¡Haz tu primer gacha x1!" aria-label="Primer gacha: abrir un sobre de papel x1"' : ""} ${disabled}>
             <strong>${mode.label}</strong>
             <span>${money(modeCost)}</span>
             ${penalty}
@@ -3155,9 +3396,15 @@ function renderCollection() {
   elements.collectionSummary.textContent = `${discoveredCards()} descubiertas de ${cards.length}. ${totalLevels()} niveles totales. Pasivas: ${passiveSummary()}.`;
 
   for (const card of filteredCards) {
+    const inExpedition = cardInExpedition(card.id);
     const button = document.createElement("button");
-    button.className = `card-button ${state.selectedCardId === card.id ? "selected" : ""}`;
+    button.className = `card-button ${state.selectedCardId === card.id ? "selected" : ""} ${inExpedition ? "in-expedition" : ""}`;
     button.type = "button";
+    button.disabled = inExpedition;
+    if (inExpedition) {
+      button.title = "Esta carta esta en una expedicion y no se puede usar.";
+      button.setAttribute("aria-label", `${card.name}, en expedicion`);
+    }
     button.addEventListener("click", () => {
       unlockAudio();
       playSound("ui");
@@ -3170,6 +3417,12 @@ function renderCollection() {
     });
 
     button.appendChild(createCardElement(card, { mini: true }));
+    if (inExpedition) {
+      const badge = document.createElement("span");
+      badge.className = "card-expedition-badge";
+      badge.textContent = "EN EXPEDICION";
+      button.appendChild(badge);
+    }
     elements.collectionGrid.appendChild(button);
   }
 }
@@ -3314,6 +3567,7 @@ function renderSelected() {
 
   const selected = state.selectedCardId ? cardById(state.selectedCardId) : null;
   const owned = selected ? state.owned[selected.id] : null;
+  const inExpedition = Boolean(selected && cardInExpedition(selected.id));
 
   if (!selected || !owned || cardLevel(owned) <= 0) {
     const empty = document.createElement("div");
@@ -3351,6 +3605,7 @@ function renderSelected() {
     ["XP", xpProgress.isMax ? "Maximo" : `${xpProgress.current}/${xpProgress.required}`],
     ["Mineral", `${currentMaterial.name} x${formatMultiplier(currentMaterial.multiplier)}`],
     ["Produccion", `${formatNumber(cardIncome(selected))}/s`],
+    ...(inExpedition ? [["Disponibilidad", "En expedicion; no se puede usar"]] : []),
     ["Resultado del próximo encantamiento", activeRoll ? `${activeRoll.name} x${formatMultiplier(activeRoll.multiplier)}` : "Aleatorio"],
     ["Mejor posible", `${formatNumber(bestIncome)}/s`],
     ["Costo por rareza", atMax ? "Maximo" : money(cost)]
@@ -3387,11 +3642,11 @@ function renderSelected() {
         <p>Nv.${pendingMove.unlockLevel || level}. ${pendingMove.description}</p>
         <div class="replace-move-list">
           ${activeMoves.map((move) => `
-            <button class="replace-move-button" type="button" data-old-move="${move.id}" data-new-move="${pendingMove.id}">
+            <button class="replace-move-button" type="button" data-old-move="${move.id}" data-new-move="${pendingMove.id}" ${inExpedition ? "disabled" : ""}>
               Reemplazar ${move.name}
             </button>
           `).join("")}
-          <button class="skip-move-button" type="button" data-new-move="${pendingMove.id}">No aprender</button>
+          <button class="skip-move-button" type="button" data-new-move="${pendingMove.id}" ${inExpedition ? "disabled" : ""}>No aprender</button>
         </div>
       </div>
     ` : ""}
@@ -3411,7 +3666,10 @@ function renderSelected() {
   elements.enchantButton.textContent = atMax
     ? "Diamante alcanzado"
     : `Encantar (${money(cost)} + ${formatMaterialRewards(materialsRequired)})`;
-  elements.enchantButton.disabled = atMax || state.gold < cost || !hasMaterials;
+  elements.enchantButton.disabled = inExpedition || atMax || state.gold < cost || !hasMaterials;
+  if (inExpedition) {
+    elements.enchantButton.textContent = "Carta en expedicion";
+  }
 }
 
 function renderBattleModes() {
@@ -3477,11 +3735,15 @@ function renderBattleCardList() {
 
   for (const card of availableCards) {
     const selected = state.selectedCardId === card.id;
+    const inExpedition = cardInExpedition(card.id);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `battle-card-choice ${selected ? "active" : ""}`;
-    button.disabled = lockedByActiveBattle;
-    button.setAttribute("aria-pressed", String(selected));
+    button.className = `battle-card-choice ${selected ? "active" : ""} ${inExpedition ? "in-expedition" : ""}`;
+    button.disabled = lockedByActiveBattle || inExpedition;
+    button.setAttribute("aria-pressed", String(selected && !inExpedition));
+    if (inExpedition) {
+      button.title = "Esta carta esta en una expedicion.";
+    }
     button.appendChild(createCardElement(card, { mini: true, reveal: true }));
     button.addEventListener("click", () => {
       state.selectedCardId = card.id;
@@ -3573,15 +3835,16 @@ function renderBattle() {
       ? "Derrota"
       : "Tu turno";
   const moves = movesForCard(card);
-  const rewardGold = Math.floor(Number(battle.rewardGold || 0) * (1 + Number(battle.bonusGold || 0)));
+  const rewardGold = goldReward(battle.rewardGold, battle.bonusGold);
   const rewardXp = Math.floor(Number(battle.rewardXp || 0) + Number(battle.bonusXp || 0));
+  const rewardMaterials = normalizeEnchantEssence(battle.rewardMaterials ?? battleRewardMaterials(mode));
 
   elements.battleArena.innerHTML = `
     <div class="battle-card battle-card-expanded" style="--role-color: ${role.color}; --enemy-color: ${enemyRole.color}; --mode-color: ${mode.color}">
       <div class="battle-mode-banner">
         <span>${mode.name}</span>
         <strong>${outcomeText}</strong>
-        <em>${money(rewardGold)} / +${rewardXp} XP</em>
+        <em>${money(rewardGold)} / +${rewardXp} XP / +${formatMaterialRewards(rewardMaterials)}</em>
       </div>
       <div class="battle-duel">
         <div class="battle-combatant">
@@ -3676,8 +3939,9 @@ function renderExpeditions() {
     const remaining = expeditionRemaining(active);
     const unlocked = levels >= expedition.unlockLevel;
     const completed = Boolean(active && remaining <= 0);
-    const selectedBusy = Boolean(selectedCard && cardInExpedition(selectedCard.id));
-    const canStart = unlocked && !active && Boolean(selectedCard) && !selectedBusy;
+    const selectedBusy = Boolean(state.selectedCardId && cardInExpedition(state.selectedCardId));
+    const selectedInBattle = Boolean(state.selectedCardId && cardInActiveBattle(state.selectedCardId));
+    const canStart = unlocked && !active && Boolean(selectedCard) && !selectedBusy && !selectedInBattle;
     const card = document.createElement("article");
     card.className = `expedition-card ${unlocked ? "" : "locked"} ${active ? "active" : ""}`;
     card.style.setProperty("--role-color", role.color);
@@ -3686,12 +3950,14 @@ function renderExpeditions() {
       ? `Requiere ${expedition.unlockLevel} niveles`
       : active
         ? completed ? "Lista para reclamar" : `En marcha ${formatDuration(remaining)}`
-        : !selectedCard
-          ? "Selecciona una carta"
-          : selectedBusy
-            ? "Esa carta ya esta de expedicion"
-            : "Disponible";
-    const rewardGold = active ? active.rewardGold : expeditionRewardGold(expedition);
+        : selectedBusy
+          ? "Esa carta ya esta de expedicion"
+          : selectedInBattle
+            ? "Esta carta esta combatiendo"
+            : !selectedCard
+              ? "Selecciona una carta"
+              : "Disponible";
+    const rewardGold = goldReward(active ? active.rewardGold : expeditionRewardGold(expedition));
     const rewardXp = active ? active.rewardXp : expeditionRewardXp(expedition);
     const rewardMaterials = active?.rewardMaterials || expeditionRewardMaterials(expedition, assignedCard?.id);
     const duration = active ? Math.ceil(active.duration / 1000) : expeditionDuration(expedition, selectedCard?.id);
@@ -3704,7 +3970,7 @@ function renderExpeditions() {
     card.innerHTML = `
       <div class="expedition-topline">
         <strong>${expedition.name}</strong>
-        <span class="role-pill">${role.short}</span>
+        <span class="role-pill">CUALQUIERA</span>
       </div>
       <p>${unlocked ? expedition.description : `Sube cartas para desbloquearla. Tienes ${levels}/${expedition.unlockLevel} niveles.`}</p>
       <div class="expedition-meta">
@@ -3718,7 +3984,7 @@ function renderExpeditions() {
       <div class="expedition-materials">Materiales: ${formatMaterialRewards(rewardMaterials)}</div>
       <div class="expedition-meta">
         <span>Poder ${formatNumber(power)}/${expedition.recommendedPower}</span>
-        <span>${role.name}</span>
+        <span>Sin restriccion de carta</span>
       </div>
       <button class="expedition-action" type="button" ${active ? (completed ? "" : "disabled") : (canStart ? "" : "disabled")}>${buttonText}</button>
       <span class="expedition-status">${statusText}</span>
@@ -3735,6 +4001,42 @@ function renderExpeditions() {
 
     elements.expeditionList.appendChild(card);
   }
+}
+
+function renderMissions() {
+  if (!elements.missionList) {
+    return;
+  }
+
+  elements.missionList.innerHTML = "";
+  const levelTier = Math.floor(totalLevels() / 25);
+
+  for (const mission of missions) {
+    const target = missionTarget(mission);
+    const progress = missionProgress(mission.id);
+    const completed = progress >= target;
+    const rewardGold = Math.floor(mission.baseGold * (1 + levelTier * 0.5));
+    const rewardMaterials = 1 + Math.floor(levelTier / 2);
+    const card = document.createElement("article");
+    card.className = `mission-card ${completed ? "completed" : ""}`;
+    card.dataset.missionId = mission.id;
+    card.innerHTML = `
+      <div class="mission-topline">
+        <strong>${mission.name}</strong>
+        <span>${completed ? "Completada" : `${progress}/${target}`}</span>
+      </div>
+      <p>${mission.description}</p>
+      <div class="mission-progress-track" role="progressbar" aria-label="${mission.name}" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(progress, target)}">
+        <span style="width: ${Math.min(100, (progress / target) * 100)}%"></span>
+      </div>
+      <div class="mission-reward">Recompensa: ${money(rewardGold)} y ${formatMaterialRewards(rewardMaterials)}</div>
+      <div class="mission-cooldown-timer" role="status" aria-live="polite"></div>
+      <button class="mission-action" type="button" ${completed ? "" : "disabled"}>${completed ? "Reclamar recompensa" : "En progreso"}</button>
+    `;
+    card.querySelector(".mission-action").addEventListener("click", () => claimMission(mission.id));
+    elements.missionList.appendChild(card);
+  }
+  updateMissionCooldownUi();
 }
 
 function renderLog() {
@@ -3834,7 +4136,7 @@ const tutorialSteps = [
   },
   {
     title: "4. Expediciones: consigue materiales",
-    text: "Envía una carta disponible a una expedición y vuelve cuando termine para reclamar la recompensa. Obtendrás oro, XP para esa carta y materiales que se acumulan en una reserva común para encantar. Las expediciones más avanzadas dan más."
+    text: "Cualquier carta puede ir a cualquier expedición. Mientras esté fuera no podrás seleccionarla, combatir con ella ni encantarla. Cuando termine, reclama oro, XP para esa carta y materiales para encantar."
   },
   {
     title: "5. Combate: pon a prueba tus cartas",
@@ -3941,6 +4243,7 @@ function renderAll() {
   renderBattleModes();
   renderBattle();
   renderExpeditions();
+  renderMissions();
   renderLog();
   renderActiveView();
 }
@@ -3959,6 +4262,7 @@ function tick() {
   renderGachas();
   renderSelected();
   renderExpeditions();
+  updateMissionCooldownUi();
 }
 
 elements.enchantButton.addEventListener("click", enchantSelected);
@@ -3980,6 +4284,16 @@ elements.tutorialSkip?.addEventListener("click", closeTutorial);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && elements.tutorialOverlay && !elements.tutorialOverlay.hidden) {
     closeTutorial();
+  }
+  if (event.key === "Escape" && elements.reincarnationOverlay && !elements.reincarnationOverlay.hidden) {
+    closeReincarnationDialog();
+  }
+});
+elements.reincarnationLater.addEventListener("click", closeReincarnationDialog);
+elements.reincarnationConfirm.addEventListener("click", performReincarnation);
+elements.reincarnationOverlay.addEventListener("click", (event) => {
+  if (event.target === elements.reincarnationOverlay) {
+    closeReincarnationDialog();
   }
 });
 if (elements.battleViewButton) {
@@ -4019,6 +4333,7 @@ if (elements.playMusicButton) {
   updatePlayMusicButton();
 }
 elements.resetButton.addEventListener("click", resetGame);
+elements.reincarnationButton.addEventListener("click", reincarnate);
 elements.saveFileButton?.addEventListener("click", () => {
   try {
     downloadSaveFile();

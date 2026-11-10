@@ -34,6 +34,11 @@
           <span>Niveles</span>
           <strong id="cardsValue">0</strong>
         </div>
+        <div class="stat">
+          <span>Reencarnacion</span>
+          <strong id="reincarnationValue">1.0x</strong>
+          <span id="reincarnationProgress">0 / 100 niveles</span>
+        </div>
       </div>
 
       <div class="top-actions">
@@ -54,6 +59,7 @@
         <button class="icon-button" id="resetButton" type="button" title="Reiniciar partida" aria-label="Reiniciar partida">
           <span aria-hidden="true">R</span>
         </button>
+        <button class="reincarnation-button" id="reincarnationButton" type="button" hidden>Reencarnar</button>
       </div>
     </header>
 
@@ -120,10 +126,20 @@
           <div class="panel-heading compact-heading">
             <div>
               <h2 id="expeditionTitle">Expediciones</h2>
-              <p>Envia cualquier carta seleccionada.</p>
+              <p>Envia cualquier carta. Mientras este fuera, no podras usarla.</p>
             </div>
           </div>
           <div class="expedition-list" id="expeditionList"></div>
+        </section>
+
+        <section class="panel mission-panel" id="missionPanel" aria-labelledby="missionTitle">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h2 id="missionTitle">Misiones</h2>
+              <p>Completa objetivos y reclama recompensas. A mas niveles, mayor el desafio.</p>
+            </div>
+          </div>
+          <div class="mission-list" id="missionList"></div>
         </section>
 
         <section class="panel log-panel" aria-labelledby="logTitle">
@@ -181,6 +197,19 @@
           <button class="tutorial-back" id="tutorialBack" type="button">Anterior</button>
           <button class="tutorial-next" id="tutorialNext" type="button">Siguiente</button>
         </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="reincarnation-overlay" id="reincarnationOverlay" hidden>
+    <section class="reincarnation-dialog" role="dialog" aria-modal="true" aria-labelledby="reincarnationDialogTitle" aria-describedby="reincarnationDialogText">
+      <span class="reincarnation-dialog-emblem" aria-hidden="true">✦</span>
+      <span class="reincarnation-dialog-kicker">NUEVO HITO</span>
+      <h2 id="reincarnationDialogTitle">¡Ya puedes reencarnar!</h2>
+      <p id="reincarnationDialogText"></p>
+      <div class="reincarnation-dialog-actions">
+        <button class="reincarnation-later" id="reincarnationLater" type="button">Ahora no</button>
+        <button class="reincarnation-confirm" id="reincarnationConfirm" type="button">Reencarnar</button>
       </div>
     </section>
   </div>

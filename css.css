@@ -156,7 +156,7 @@ h3 {
 
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(3, minmax(116px, 1fr));
+  grid-template-columns: repeat(4, minmax(116px, 1fr));
   gap: 10px;
 }
 
@@ -173,6 +173,11 @@ h3 {
   display: block;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.stat #reincarnationProgress {
+  margin-top: 3px;
+  font-size: 0.7rem;
 }
 
 .stat strong {
@@ -263,6 +268,43 @@ h3 {
   border-color: var(--accent);
   color: var(--accent-dark);
   outline: 0;
+}
+
+.reincarnation-button {
+  min-height: 56px;
+  padding: 0 18px;
+  border: 2px solid #d5aa40;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff4bb, #f1c34b 58%, #e1a51d);
+  color: #392600;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 1000;
+  white-space: nowrap;
+  box-shadow: 0 0 0 3px rgba(230, 177, 42, 0.22), 0 0 24px rgba(230, 177, 42, 0.82);
+  animation: reincarnation-button-glow 1.15s ease-in-out infinite;
+}
+
+.reincarnation-button[hidden] {
+  display: none;
+}
+
+.reincarnation-button:hover,
+.reincarnation-button:focus-visible {
+  outline: 3px solid rgba(230, 177, 42, 0.42);
+  outline-offset: 3px;
+  transform: translateY(-2px) scale(1.04);
+}
+
+@keyframes reincarnation-button-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(230, 177, 42, 0.22), 0 0 18px rgba(230, 177, 42, 0.64);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(230, 177, 42, 0.08), 0 0 30px rgba(230, 177, 42, 0.96);
+    transform: scale(1.06);
+  }
 }
 
 .visually-hidden-input {
@@ -612,6 +654,45 @@ h3 {
 .gacha-pull.primary span,
 .gacha-pull.primary em {
   color: rgba(255, 255, 255, 0.78);
+}
+
+.gacha-pull.first-gacha-highlight {
+  border-color: #d6a11e;
+  background: linear-gradient(135deg, #fff1ad, #f2c34d 58%, #e0a51e);
+  color: #392600;
+  animation: first-gacha-glow 1.4s ease-in-out infinite;
+}
+
+.gacha-pull.first-gacha-highlight span,
+.gacha-pull.first-gacha-highlight em {
+  color: #634707;
+}
+
+@keyframes first-gacha-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 177, 42, 0.48);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(230, 177, 42, 0), 0 0 18px rgba(230, 177, 42, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha-pull.first-gacha-highlight {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(230, 177, 42, 0.3);
+  }
+
+  .reincarnation-button {
+    animation: none;
+    box-shadow: 0 0 0 4px rgba(230, 177, 42, 0.34), 0 0 20px rgba(230, 177, 42, 0.72);
+  }
+
+  .reincarnation-overlay,
+  .reincarnation-dialog {
+    animation: none;
+  }
 }
 
 .collection-heading {
@@ -1083,6 +1164,20 @@ h3 {
 
 .card-button.selected .card-shell {
   box-shadow: 0 0 0 4px rgba(215, 71, 47, 0.22), 0 14px 28px rgba(20, 23, 22, 0.13);
+}
+
+.card-button.in-expedition {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.card-expedition-badge {
+  display: block;
+  margin-top: 5px;
+  color: #8d392f;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-align: center;
 }
 
 .selected-card {
@@ -1903,13 +1998,13 @@ h3 {
 .role-pill {
   display: inline-grid;
   place-items: center;
-  min-width: 30px;
+  min-width: 86px;
   height: 26px;
   border-radius: 7px;
   padding: 0 7px;
   background: var(--role-color);
   color: #fff;
-  font-size: 0.74rem;
+  font-size: 0.62rem;
   font-weight: 950;
 }
 
@@ -1953,6 +2048,91 @@ h3 {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 850;
+}
+
+.mission-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mission-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(24, 132, 91, 0.08), rgba(255, 255, 255, 0.96));
+}
+
+.mission-card.completed {
+  border-color: #18845b;
+  box-shadow: inset 3px 0 0 #18845b;
+}
+
+.mission-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #26302b;
+  font-size: 0.83rem;
+}
+
+.mission-topline span,
+.mission-card p,
+.mission-reward {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.mission-card p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.mission-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(22, 22, 22, 0.1);
+}
+
+.mission-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #18845b;
+  transition: width 180ms ease;
+}
+
+.mission-reward {
+  color: #26302b;
+}
+
+.mission-cooldown-timer {
+  color: #126844;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.mission-cooldown-timer:empty {
+  display: none;
+}
+
+.mission-action {
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: #18845b;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.mission-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .pull-log {
@@ -2037,6 +2217,111 @@ h3 {
   background: rgba(13, 19, 17, 0.72);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+}
+
+.reincarnation-overlay[hidden] {
+  display: none !important;
+}
+
+.reincarnation-overlay {
+  position: fixed;
+  z-index: 10001;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(57, 63, 66, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: reincarnation-backdrop-in 180ms ease-out both;
+}
+
+.reincarnation-dialog {
+  width: min(500px, 100%);
+  padding: clamp(26px, 6vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 224, 135, 0.36), transparent 42%),
+    #fff;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.38), 0 0 0 5px rgba(255, 255, 255, 0.18);
+  text-align: center;
+  animation: tutorial-enter 240ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.reincarnation-dialog-emblem {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 15px;
+  border: 1px solid rgba(168, 119, 18, 0.28);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fff1ad, #eab638);
+  color: #74520a;
+  font-size: 1.8rem;
+  box-shadow: 0 8px 26px rgba(230, 177, 42, 0.38);
+}
+
+.reincarnation-dialog-kicker {
+  color: #9a6b0e;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+
+.reincarnation-dialog h2 {
+  margin-top: 8px;
+  font-size: clamp(1.45rem, 5vw, 2rem);
+}
+
+.reincarnation-dialog > p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.reincarnation-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.reincarnation-dialog-actions button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 850;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.reincarnation-dialog-actions button:hover,
+.reincarnation-dialog-actions button:focus-visible {
+  outline: 0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(26, 31, 29, 0.12);
+}
+
+.reincarnation-dialog-actions .reincarnation-confirm {
+  border-color: #cc9b27;
+  background: linear-gradient(135deg, #fff1ad, #eab638);
+  color: #392600;
+  font-weight: 950;
+}
+
+@keyframes reincarnation-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .tutorial-dialog {
@@ -2167,6 +2452,43 @@ h3 {
 
 .pull-toast.leaving {
   animation: toast-out 240ms ease-in both;
+}
+
+.mission-toast {
+  border: 2px solid #18845b;
+  background:
+    linear-gradient(135deg, rgba(24, 132, 91, 0.2), rgba(255, 255, 255, 0.98)),
+    #fff;
+  box-shadow: 0 18px 42px rgba(24, 132, 91, 0.3);
+}
+
+.mission-toast .toast-sigil {
+  background: #18845b;
+  font-size: 1.6rem;
+}
+
+.mission-toast-main {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mission-toast-main:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgba(24, 132, 91, 0.42);
+  outline-offset: 3px;
+}
+
+.mission-toast .toast-copy > span {
+  color: #126844;
+}
+
+.mission-toast .toast-copy p {
+  margin-top: 2px;
 }
 
 .toast-sigil {
@@ -2374,7 +2696,7 @@ h3 {
   }
 
   .stats-bar {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .top-actions {
