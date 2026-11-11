@@ -48,7 +48,7 @@ const rarities = [
 
 const cards = [
   // COMMON
-  { id: "gey", name: "Cloud Kobold gey", rarity: "common", income: 0.1, sigil: "Cl" },
+  { id: "gey", name: "Cloud el Kobold Gey", rarity: "common", income: 0.1, sigil: "GY" },
   { id: "copper-spark", name: "Humano Explorador", rarity: "common", income: 0.4, sigil: "HU" },
   { id: "street-apprentice", name: "Elfo del Bosque", rarity: "common", income: 0.45, sigil: "EL" },
   { id: "dust-shield", name: "Enano Herrero", rarity: "common", income: 0.55, sigil: "EN" },
@@ -324,6 +324,13 @@ const roleDefinitions = [
     short: "EC",
     color: "#ce942f",
     passive: "Aumenta el oro pasivo total."
+  },
+  {
+    id: "gey",
+    name: "GEY",
+    short: "GY",
+    color: "#ff4f9a",
+    passive: "En combate, reduce mucho la vida y el ataque."
   }
 ];
 
@@ -347,6 +354,10 @@ const uniqueAbilitiesByRole = {
   economy: {
     name: "Tesoro Vivo",
     description: "+8% produccion de esta carta."
+  },
+  gey: {
+    name: "Talento dudoso",
+    description: "Sus movimientos hacen poco daño."
   }
 };
 
@@ -387,6 +398,13 @@ const roleMoves = {
     { id: "gold_rush", name: "Fiebre de oro", description: "Daño con oro extra alto.", unlockLevel: 4, damage: 0.82, goldBonus: 0.32 },
     { id: "safe_bet", name: "Apuesta segura", description: "Escudo y oro moderado.", unlockLevel: 8, damage: 0.54, shield: 0.85, goldBonus: 0.22 },
     { id: "jackpot_hit", name: "Golpe jackpot", description: "Mucho daño y gran botín.", unlockLevel: 13, damage: 1.18, goldBonus: 0.42 }
+  ],
+  gey: [
+    { id: "weak_tap", name: "Toquecito", description: "Un golpe muy flojo.", unlockLevel: 1, damage: 0.25 },
+    { id: "missed_swing", name: "Beso Homosexual", description: "Casi no hace daño.", unlockLevel: 1, damage: 0.2 },
+    { id: "slow_nudge", name: "Empujoncito lento", description: "Un ataque debil.", unlockLevel: 4, damage: 0.3 },
+    { id: "tiny_spark", name: "Chispita", description: "Un destello con poco daño.", unlockLevel: 8, damage: 0.35 },
+    { id: "last_bonk", name: "Golpecito final", description: "Su mejor golpe sigue siendo flojo.", unlockLevel: 13, damage: 0.4 }
   ]
 };
 
@@ -1837,6 +1855,10 @@ function roleById(roleId) {
 function cardRole(card) {
   const id = card.id;
 
+  if (id === "gey") {
+    return roleById("gey");
+  }
+
   if (/guard|shield|warden|golem|titan|giant|storm|tarrasque|serpent|minotaur|gorgon|crown|bone-dice|eternal-king/.test(id)) {
     return roleById("defense");
   }
@@ -2389,6 +2411,11 @@ function battleStatsForCard(card, options = {}) {
     case "economy":
       attack *= 0.9;
       hp *= 0.9;
+      break;
+
+    case "gey":
+      attack *= 0.1;
+      hp *= 0.1;
       break;
   }
 
@@ -3198,6 +3225,7 @@ function createCardElement(card, options = {}) {
   const effectMaterial = isFlashing ? enchantMaterialById(enchantEffect.materialId) : material;
   const shell = document.createElement("article");
   shell.className = `card-shell ${options.big ? "big" : ""} ${options.mini ? "mini" : ""} ${unlocked ? "" : "locked"} ${isEnchanted ? "enchanted-card" : ""} ${hasUnique ? "unique-card" : ""} ${isFlashing ? "enchant-flash" : ""} ${options.roulette ? "roulette-card" : ""} ${options.rouletteFinal ? "roulette-final" : ""}`;
+  shell.dataset.role = role.id;
   shell.style.setProperty("--rarity-color", rarity.color);
   shell.style.setProperty("--mineral-color", unlocked ? effectMaterial.color : baseEnchantMaterial.color);
   shell.style.setProperty("--role-color", role.color);
